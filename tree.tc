@@ -21,11 +21,16 @@
   typedef list<VariableDef *> VariableDefList;
   typedef list<MethodDef *> MethodDefList;
   typedef list<ParameterDef *> ParameterDefList;
-  
-  /*Preguntar donde se tinen que crear las nuevas listas de expresiones y sentencias */
 
   typedef enum {OpAdd,OpSub,OpMul,OpDiv,OpMod,OpAnd,OpOr,OpNot,OpGT,OpLT,OpGTE,
   OpLTE,OpEq,OpNotEq,OpRShift,OpLShift,OpRot} ExpressionOperator;
+  /* Aqui estan las nuevas listas */
+  typedef list<NewStatement *> NewStatementList;
+  typedef list<NewExpression *> NewExpressionList;
+  typedef list<NewAssignStatement *> NewAssignList;
+  typedef list<NewVariableDef *> NewVariableDefList;
+  typedef list<NewMethodDef *> NewMethodDefList;
+  typedef list<NewParameterDef *> NewParameterDefList;
 %}
 
 %{
@@ -44,7 +49,8 @@
 %node Statement TheClass %abstract %typedef
 
 %operation %virtual string ToString(TheClass *this)
-
+%operation %virtual TheNewClass ValidarSemantica(TheClass *this)
+%operation %virtual void AddStatement([BlockStatement *this],Statement *stm)
 
 
 %node ClassDef TheClass %typedef = {
@@ -203,7 +209,150 @@
     int first_column;
 }
 
-%operation %virtual void AddStatement([BlockStatement *this],Statement *stm)
+/************** Arbol decorado ****************/
+
+%node TheNewClass %abstract %typedef
+
+%node ClassDef TheNewClass %typedef = {
+    string className;
+    VariableDefList *listVariable;
+    MethodDefList *listMethod;   
+}
+%node ErrorSemantico %typedef = {
+    string msj;
+}
+
+ErrorSemantico()
+{
+    cout << msj;
+}
+
+%node NewExpression TheNewClass %abstract %typedef
+%node NewStatement TheNewClass %abstract %typedef
+
+/* Aqui comienzan las expresiones decoradas */
+%node NewConstantExpression NewExpression %abstract
+%node NewConstantIntExpression NewConstantExpression = {
+    int Newconstant;
+}
+
+%node NewConstantBoolExpression NewConstantExpression = {
+    bool Newconstant;
+}
+
+%node NewConstantCharExpression NewConstantExpression = {
+    char Newconstant;
+}
+
+%node NewBinaryExpression NewExpression %abstract = {
+    Type type;
+    NewExpression *NewFirstExpression;
+    NewExpression *NewSecondExpression;
+}
+
+%node NewUnaryExpression NewExpression %abstract = {
+    Type type;
+    NewExpression *NewFirstExpression;
+}
+
+%node NewParameterDef NewExpression = {
+    string NewId;
+    Type NewParameterType;
+}
+
+%node NewLValueExpression NewExpression = {
+    string NewId;
+    %nocreate NewExpression *NewExpr;
+}
+
+%node NewMethodCallExpression NewExpression = {
+    string NewId;
+    NewExpressionList *NewParameters;
+}
+
+%node NewAddExpression BinaryExpression
+%node NewSubExpression BinaryExpression
+%node NewMultExpression BinaryExpression
+%node NewDivExpression BinaryExpression
+%node NewLessThanExpression BinaryExpression
+%node NewLessThanEqualExpression BinaryExpression
+%node NewBigerThanExpression BinaryExpression
+%node NewBigerThanEqualExpression BinaryExpression
+%node NewEqualExpression BinaryExpression
+%node NewNotEqualExpression BinaryExpression
+%node NewShiftRightExpression BinaryExpression
+%node NewShiftLeftExpression BinaryExpression
+%node NewRotExpression BinaryExpression
+%node NewOrExpression BinaryExpression
+%node NewAndExpression BinaryExpression
+%node NewNotExpression UnaryExpression
+%node NewModExpression BinaryExpression
+
+/* Aqui terminana las expresiones decoradas */
+
+/* Aqui comienzan los statements decorados */
+%node NewVariableDef NewStatement = {
+
+}
+
+%node NewMethodDef NewStatement = {
+     
+}
+
+%node NewIfStatement NewStatement = {
+    NewExpression *NewCondition;
+    NewStatement *NewStatementTrue;
+    NewStatement *NewStatementFalse;
+}
+
+%node NewWhileStatement NewStatement = {
+    NewExpression *NewCondition;
+    NewStatement *NewStatementTrue;
+}
+
+%node NewForStatement NewStatement = {
+    NewStatement *NewFirstListAssign;
+    NewExpression *NewCondition;
+    NewStatement *NewLasttListAssign;
+    NewStatement *NewStatementTrue;  
+}
+
+%node NewAssignStatement NewStatement = {
+    NewExpression *NewLeftValue;
+    NewExpression *NewValue;
+}
+
+%node NewReadStatement NewStatement = {
+    NewExpressionList *NewListExpression;
+}
+
+%node NewPrintStatement NewStatement = {
+    NewExpressionList *NewListExpression;
+}
+
+%node NewMethodCallStatement NewStatement = {
+    NewExpressionList *NewParameters;
+}
+
+%node NewReturnStatement NewStatement = {
+    NewExpression *NewReturnExpression;
+}
+
+%node NewBreakStatement NewStatement = {
+
+}
+
+%node NewContinueStatement NewStatement = {
+
+}
+
+%node NewBlockStatement NewStatement = {
+    %nocreate StatementList *listStatements;
+}
+
+/*Aqui termina el arbol decorado*/
+
+
 AddStatement(BlockStatement)
 {
     if(listStatements == 0)
@@ -497,100 +646,19 @@ ToString(ClassDef)
   out << "}";
   return out.str(); 
 }
+/*************Validar Semantica ***************/
 
-/************** Arbol decorado ****************/
-
-%node TheNewClass %abstract %typedef
-
-%node ClassDef TheNewClass %typedef = {
-    string className;
-    VariableDefList *listVariable;
-    MethodDefList *listMethod;   
-}
-%node ErrorSemantico %typedef = {
-    string msj;
-}
-
-ErrorSemantico()
+/* Validar semantica Expresiones */
+ValidarSemantica(AddExpression)
 {
-    cout << msj;
-}
+    NewExpression *first = FirstExpression->ValidarSemantica();
+    NewExpression *second = SecondExpression->ValidarSemantica();
 
-%node NewExpression TheNewClass %abstract %typedef
-%node NewStatement TheNewClass %abstract %typedef
-%operation %virtual ValidarSemantica(TheNewClass *this)
-
-/* Aqui comienzan las expresiones decoradas */
-%node NewConstantExpression NewExpression %abstract
-%node NewConstantIntExpression NewConstantExpression = {
-    int Newconstant;
-}
-
-%node NewConstantBoolExpression NewConstantExpression = {
-    bool Newconstant;
-}
-
-%node NewConstantCharExpression NewConstantExpression = {
-    char Newconstant;
-}
-
-%node NewBinaryExpression NewExpression %abstract = {
-    Type type;
-    NewExpression *NewFirstExpression;
-    NewExpression *NewSecondExpression;
-}
-
-%node NewUnaryExpression NewExpression %abstract = {
-    Type type;
-    NewExpression *NewFirstExpression;
-}
-
-%node NewParameterDef NewExpression = {
-    string NewId;
-    Type NewParameterType;
-}
-
-%node NewLValueExpression NewExpression = {
-    string NewId;
-    %nocreate NewExpression *NewExpr;
-}
-
-%node NewMethodCallExpression NewExpression = {
-    string NewId;
-    NewExpressionList *NewParameters;
-}
-
-%node NewAddExpression BinaryExpression
-%node NewSubExpression BinaryExpression
-%node NewMultExpression BinaryExpression
-%node NewDivExpression BinaryExpression
-%node NewLessThanExpression BinaryExpression
-%node NewLessThanEqualExpression BinaryExpression
-%node NewBigerThanExpression BinaryExpression
-%node NewBigerThanEqualExpression BinaryExpression
-%node NewEqualExpression BinaryExpression
-%node NewNotEqualExpression BinaryExpression
-%node NewShiftRightExpression BinaryExpression
-%node NewShiftLeftExpression BinaryExpression
-%node NewRotExpression BinaryExpression
-%node NewOrExpression BinaryExpression
-%node NewAndExpression BinaryExpression
-%node NewNotExpression UnaryExpression
-%node NewModExpression BinaryExpression
-
-
-
-ValidarSemantica(NewAddExpression)
-{
-    NewFirstExpression = NewFirstExpression->ValidarSemantica();
-    NewSecondExpression = NewSecondExpression->ValidarSemantica();
-
-    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    if(first != NULL && second != NULL)
     {
-        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        if((first->type == second->type) /* validar que sea entero*/)
         {
-            type = NewConstantIntExpression;
-            return NewAddExpression(NewFirstExpression,NewSecondExpression,type);
+            return NewAddExpression(NewFirstExpression,NewSecondExpression);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -599,17 +667,16 @@ ValidarSemantica(NewAddExpression)
     return NULL;
 }
 
-ValidarSemantica(NewSubExpression)
+ValidarSemantica(SubExpression)
 {
-    NewFirstExpression = NewFirstExpression->ValidarSemantica();
-    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+    NewExpression *first = FirstExpression->ValidarSemantica();
+    NewExpression *second = SecondExpression->ValidarSemantica();
 
-    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    if(first != NULL && second != NULL)
     {
-        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        if((first->type == second->type) /* validar que sea entero*/)
         {
-            type = NewConstantIntExpression;
-            return NewSubExpression(NewFirstExpression,NewSecondExpression,type);
+            return NewSubExpression(NewFirstExpression,NewSecondExpression);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -618,17 +685,16 @@ ValidarSemantica(NewSubExpression)
     return NULL;
 }
 
-ValidarSemantica(NewMultExpression)
+ValidarSemantica(MultExpression)
 {
-    NewFirstExpression = NewFirstExpression->ValidarSemantica();
-    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+    NewExpression *first = FirstExpression->ValidarSemantica();
+    NewExpression *second = SecondExpression->ValidarSemantica();
 
-    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    if(first != NULL && second != NULL)
     {
-        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        if((first->type == second->type) /* validar que sea entero*/)
         {
-            type = NewConstantIntExpression;
-            return NewMultExpression(NewFirstExpression,NewSecondExpression,type);
+            return NewMultExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -637,17 +703,16 @@ ValidarSemantica(NewMultExpression)
     return NULL;
 }
 
-ValidarSemantica(NewDivExpression)
+ValidarSemantica(DivExpression)
 {
-    NewFirstExpression = NewFirstExpression->ValidarSemantica();
-    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+    NewExpression *first = FirstExpression->ValidarSemantica();
+    NewExpression *second = SecondExpression->ValidarSemantica();
 
-    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    if(first != NULL && second != NULL)
     {
-        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        if((first->type == second->type) /* validar que sea entero*/)
         {
-            type = NewConstantIntExpression;
-            return NewDivExpression(NewFirstExpression,NewSecondExpression,type);
+            return NewDivExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -656,17 +721,16 @@ ValidarSemantica(NewDivExpression)
     return NULL;
 }
 
-ValidarSemantica(NewLessThanExpression)
+ValidarSemantica(LessThanExpression)
 {
-    NewFirstExpression = NewFirstExpression->ValidarSemantica();
-    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+    NewExpression *first = FirstExpression->ValidarSemantica();
+    NewExpression *second = SecondExpression->ValidarSemantica();
 
-    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    if(first != NULL && second != NULL)
     {
-        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        if((first->type == second->type) /* validar que sea entero*/)
         {
-            type = NewConstantIntExpression;
-            return NewLessThanExpression(NewFirstExpression,NewSecondExpression,type);
+            return NewLessThanExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -675,17 +739,16 @@ ValidarSemantica(NewLessThanExpression)
     return NULL;
 }
 
-ValidarSemantica(NewBigerThanExpression)
+ValidarSemantica(BigerThanExpression)
 {
-    NewFirstExpression = NewFirstExpression->ValidarSemantica();
-    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+    NewExpression *first = FirstExpression->ValidarSemantica();
+    NewExpression *second = SecondExpression->ValidarSemantica();
 
-    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    if(first != NULL && second != NULL)
     {
-        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        if((first->type == second->type) /* validar que sea entero*/)
         {
-            type = NewConstantIntExpression;
-            return NewBinaryExpression(NewFirstExpression,NewSecondExpression,type);
+            return NewBigerThanExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -694,17 +757,16 @@ ValidarSemantica(NewBigerThanExpression)
     return NULL;
 }
 
-ValidarSemantica(NewLessThanEqualExpression)
+ValidarSemantica(LessThanEqualExpression)
 {
-    NewFirstExpression = NewFirstExpression->ValidarSemantica();
-    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+    NewExpression *first = FirstExpression->ValidarSemantica();
+    NewExpression *second = SecondExpression->ValidarSemantica();
 
-    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    if(first != NULL && second != NULL)
     {
-        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        if((first->type == second->type) /* validar que sea entero*/)
         {
-            type = NewConstantIntExpression;
-            return NewLessThanEqualExpression(NewFirstExpression,NewSecondExpression,type);
+            return NewLessThanEqualExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -713,17 +775,16 @@ ValidarSemantica(NewLessThanEqualExpression)
     return NULL;
 }
 
-ValidarSemantica(NewBigerThanEqualExpression)
+ValidarSemantica(BigerThanEqualExpression)
 {
-    NewFirstExpression = NewFirstExpression->ValidarSemantica();
-    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+    NewExpression *first = FirstExpression->ValidarSemantica();
+    NewExpression *second = SecondExpression->ValidarSemantica();
 
-    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    if(first != NULL && second != NULL)
     {
-        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        if((first->type == second->type) /* validar que sea entero*/)
         {
-            type = NewConstantIntExpression;
-            return NewBigerThanEqualExpression(NewFirstExpression,NewSecondExpression,type);
+            return NewBigerThanEqualExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -732,17 +793,16 @@ ValidarSemantica(NewBigerThanEqualExpression)
     return NULL;
 }
 
-ValidarSemantica(NewEqualExpression)
+ValidarSemantica(EqualExpression)
 {
-    NewFirstExpression = NewFirstExpression->ValidarSemantica();
-    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+    NewExpression *first = FirstExpression->ValidarSemantica();
+    NewExpression *second = SecondExpression->ValidarSemantica();
 
-    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    if(first != NULL && second != NULL)
     {
-        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        if((first->type == second->type) /* validar que sea entero*/)
         {
-            type = NewConstantIntExpression;
-            return NewEqualExpression(NewFirstExpression,NewSecondExpression,type);
+            return NewEqualExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -751,17 +811,16 @@ ValidarSemantica(NewEqualExpression)
     return NULL;
 }
 
-ValidarSemantica(NewNotEqualExpression)
+ValidarSemantica(NotEqualExpression)
 {
-    NewFirstExpression = NewFirstExpression->ValidarSemantica();
-    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+    NewExpression *first = FirstExpression->ValidarSemantica();
+    NewExpression *second = SecondExpression->ValidarSemantica();
 
-    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    if(first != NULL && second != NULL)
     {
-        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        if((first->type == second->type) /* validar que sea entero*/)
         {
-            type = NewConstantIntExpression;
-            return NewNotEqualExpression(NewFirstExpression,NewSecondExpression,type);
+            return NewNotEqualExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -770,17 +829,16 @@ ValidarSemantica(NewNotEqualExpression)
     return NULL;
 }
 
-ValidarSemantica(NewShiftLeftExpression)
+ValidarSemantica(ShiftLeftExpression)
 {
-    NewFirstExpression = NewFirstExpression->ValidarSemantica();
-    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+    NewExpression *first = FirstExpression->ValidarSemantica();
+    NewExpression *second = SecondExpression->ValidarSemantica();
 
-    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    if(first != NULL && second != NULL)
     {
-        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        if((first->type == second->type) /* validar que sea entero*/)
         {
-            type = NewConstantIntExpression;
-            return NewShiftLeftExpression(NewFirstExpression,NewSecondExpression,type);
+            return NewShiftLeftExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -789,17 +847,16 @@ ValidarSemantica(NewShiftLeftExpression)
     return NULL;
 }
 
-ValidarSemantica(NewShiftRightExpression)
+ValidarSemantica(ShiftRightExpression)
 {
-    NewFirstExpression = NewFirstExpression->ValidarSemantica();
-    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+    NewExpression *first = FirstExpression->ValidarSemantica();
+    NewExpression *second = SecondExpression->ValidarSemantica();
 
-    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    if(first != NULL && second != NULL)
     {
-        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        if((first->type == second->type) /* validar que sea entero*/)
         {
-            type = NewConstantIntExpression;
-            return NewShiftLeftExpression(NewFirstExpression,NewSecondExpression,type);
+            return NewShiftRightExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -808,35 +865,16 @@ ValidarSemantica(NewShiftRightExpression)
     return NULL;
 }
 
-ValidarSemantica(NewRotExpression)
+ValidarSemantica(RotExpression)
 {
-    NewFirstExpression = NewFirstExpression->ValidarSemantica();
-    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+    NewExpression *first = FirstExpression->ValidarSemantica();
+    NewExpression *second = SecondExpression->ValidarSemantica();
 
-    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    if(first != NULL && second != NULL)
     {
-        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        if((first->type == second->type) /* validar que sea entero*/)
         {
-            type = NewConstantIntExpression;
-            return NewRotExpression(NewFirstExpression,NewSecondExpression,type);
-        }
-        ErrorSemantico("Error: Tipos Incompatibles");
-        return NULL;
-    }
-    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
-    return NULL;
-}
-ValidarSemantica(NewOrExpression)
-{
-    NewFirstExpression = NewFirstExpression->ValidarSemantica();
-    NewSecondExpression = NewSecondExpression->ValidarSemantica();
-
-    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
-    {
-        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
-        {
-            type = NewConstantBoolExpression;
-            return NewOrExpression(NewFirstExpression,NewSecondExpression,type);
+            return NewRotExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -845,35 +883,16 @@ ValidarSemantica(NewOrExpression)
     return NULL;
 }
 
-ValidarSemantica(NewAndExpression)
+ValidarSemantica(OrExpression)
 {
-    NewFirstExpression = NewFirstExpression->ValidarSemantica();
-    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+    NewExpression *first = FirstExpression->ValidarSemantica();
+    NewExpression *second = SecondExpression->ValidarSemantica();
 
-    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    if(first != NULL && second != NULL)
     {
-        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        if((first->type == second->type) /* validar que sea entero*/)
         {
-            type = NewConstantBoolExpression;
-            return NewAndExpression(NewFirstExpression,NewSecondExpression,type);
-        }
-        ErrorSemantico("Error: Tipos Incompatibles");
-        return NULL;
-    }
-    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
-    return NULL;
-}
-ValidarSemantica(NewModExpression)
-{
-    NewFirstExpression = NewFirstExpression->ValidarSemantica();
-    NewSecondExpression = NewSecondExpression->ValidarSemantica();
-
-    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
-    {
-        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
-        {
-            type = NewConstantIntExpression;
-            return NewAndExpression(NewFirstExpression,NewSecondExpression,type);
+            return NewOrExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -882,16 +901,51 @@ ValidarSemantica(NewModExpression)
     return NULL;
 }
 
-ValidarSemantica(NewNotExpression)
+ValidarSemantica(AndExpression)
 {
-    NewFirstExpression = NewFirstExpression->ValidarSemantica();
+    NewExpression *first = FirstExpression->ValidarSemantica();
+    NewExpression *second = SecondExpression->ValidarSemantica();
+
+    if(first != NULL && second != NULL)
+    {
+        if((first->type == second->type) /* validar que sea entero*/)
+        {
+            return NewAndExpression(first,second);
+        }
+        ErrorSemantico("Error: Tipos Incompatibles");
+        return NULL;
+    }
+    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
+    return NULL;
+}
+
+ValidarSemantica(ModExpression)
+{
+    NewExpression *first = FirstExpression->ValidarSemantica();
+    NewExpression *second = SecondExpression->ValidarSemantica();
+
+    if(first != NULL && second != NULL)
+    {
+        if((first->type == second->type) /* validar que sea entero*/)
+        {
+            return NewModExpression(first,second);
+        }
+        ErrorSemantico("Error: Tipos Incompatibles");
+        return NULL;
+    }
+    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
+    return NULL;
+}
+
+ValidarSemantica(NotExpression)
+{
+    NewExpression *first = NewFirstExpression->ValidarSemantica();
     
-    if(NewFirstExpression != NULL )
+    if(first != NULL )
     {
         if(/* validar que sea boleano*/)
         {
-            type = NewConstantBoolExpression;
-            return NewRotExpression(NewFirstExpression,type);
+            return NewRotExpression(first);
         }
         ErrorSemantico("Error: Tipo Incompatibles");
         return NULL;
@@ -900,59 +954,27 @@ ValidarSemantica(NewNotExpression)
     return NULL;
 }
 
-/* Aqui terminana las expresiones decoradas */
-/* Aqui comienzan los statements decorados */
-%node NewVariableDef NewStatement = {
+/* Validar semantica Statements */
 
+ValidarSemantica(IfStatement)
+{
+    NewExpression *newCondition = condition->ValidarSemantica();
+    if(newCondition == NULL)
+        return NULL;
+    if(/*validar tipo*/)
+    {
+        ErrorSemantico("Error: Condicion if debe se bool");
+        return NULL;
+    }
+    NewExpression *newTrueBlock = statementTrue->ValidarSemantica();
+    NewExpression *newFalseBlock;
+    if(newTrueBlock == NULL)
+        return NULL;
+    if(statementFalse != NULL)
+    {
+        newFalseBlock = statementFalse->ValidarSemantica();
+        if(newFalseBlock == NULL)
+            return NULL;
+    }
+    return NewIfStatement(newCondition,newTrueBlock,newFalseBlock);
 }
-
-%node NewMethodDef NewStatement = {
-     
-}
-
-%node NewIfStatement NewStatement = {
-    NewExpression *NewCondition;
-    NewStatement *NewStatementTrue;
-    NewStatement *NewStatementFalse;
-}
-
-%node NewWhileStatement NewStatement = {
-
-}
-
-%node NewForStatement NewStatement = {
-
-}
-
-%node NewAssignStatement NewStatement = {
-
-}
-
-%node NewReadStatement NewStatement = {
-
-}
-
-%node NewPrintStatement NewStatement = {
-
-}
-
-%node NewMethodCallStatement NewStatement = {
-
-}
-
-%node NewReturnStatement NewStatement = {
-
-}
-
-%node NewBreakStatement NewStatement = {
-
-}
-
-%node NewContinueStatement NewStatement = {
-
-}
-
-%node NewBlockStatement NewStatement = {
-
-}
-/* Aqui teminan los statements decorados */
