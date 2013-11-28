@@ -658,7 +658,7 @@ ValidarSemantica(AddExpression)
     {
         if((first->type == second->type) /* validar que sea entero*/)
         {
-            return NewAddExpression(NewFirstExpression,NewSecondExpression);
+            return new NewAddExpression(NewFirstExpression,NewSecondExpression);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -676,7 +676,7 @@ ValidarSemantica(SubExpression)
     {
         if((first->type == second->type) /* validar que sea entero*/)
         {
-            return NewSubExpression(NewFirstExpression,NewSecondExpression);
+            return new NewSubExpression(NewFirstExpression,NewSecondExpression);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -694,7 +694,7 @@ ValidarSemantica(MultExpression)
     {
         if((first->type == second->type) /* validar que sea entero*/)
         {
-            return NewMultExpression(first,second);
+            return new NewMultExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -712,7 +712,7 @@ ValidarSemantica(DivExpression)
     {
         if((first->type == second->type) /* validar que sea entero*/)
         {
-            return NewDivExpression(first,second);
+            return new NewDivExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -730,7 +730,7 @@ ValidarSemantica(LessThanExpression)
     {
         if((first->type == second->type) /* validar que sea entero*/)
         {
-            return NewLessThanExpression(first,second);
+            return new NewLessThanExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -748,7 +748,7 @@ ValidarSemantica(BigerThanExpression)
     {
         if((first->type == second->type) /* validar que sea entero*/)
         {
-            return NewBigerThanExpression(first,second);
+            return new NewBigerThanExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -766,7 +766,7 @@ ValidarSemantica(LessThanEqualExpression)
     {
         if((first->type == second->type) /* validar que sea entero*/)
         {
-            return NewLessThanEqualExpression(first,second);
+            return new NewLessThanEqualExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -784,7 +784,7 @@ ValidarSemantica(BigerThanEqualExpression)
     {
         if((first->type == second->type) /* validar que sea entero*/)
         {
-            return NewBigerThanEqualExpression(first,second);
+            return new NewBigerThanEqualExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -802,7 +802,7 @@ ValidarSemantica(EqualExpression)
     {
         if((first->type == second->type) /* validar que sea entero*/)
         {
-            return NewEqualExpression(first,second);
+            return new NewEqualExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -820,7 +820,7 @@ ValidarSemantica(NotEqualExpression)
     {
         if((first->type == second->type) /* validar que sea entero*/)
         {
-            return NewNotEqualExpression(first,second);
+            return new NewNotEqualExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -838,7 +838,7 @@ ValidarSemantica(ShiftLeftExpression)
     {
         if((first->type == second->type) /* validar que sea entero*/)
         {
-            return NewShiftLeftExpression(first,second);
+            return new NewShiftLeftExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -856,7 +856,7 @@ ValidarSemantica(ShiftRightExpression)
     {
         if((first->type == second->type) /* validar que sea entero*/)
         {
-            return NewShiftRightExpression(first,second);
+            return new NewShiftRightExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -874,7 +874,7 @@ ValidarSemantica(RotExpression)
     {
         if((first->type == second->type) /* validar que sea entero*/)
         {
-            return NewRotExpression(first,second);
+            return new NewRotExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -892,7 +892,7 @@ ValidarSemantica(OrExpression)
     {
         if((first->type == second->type) /* validar que sea entero*/)
         {
-            return NewOrExpression(first,second);
+            return new NewOrExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -910,7 +910,7 @@ ValidarSemantica(AndExpression)
     {
         if((first->type == second->type) /* validar que sea entero*/)
         {
-            return NewAndExpression(first,second);
+            return new NewAndExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -928,7 +928,7 @@ ValidarSemantica(ModExpression)
     {
         if((first->type == second->type) /* validar que sea entero*/)
         {
-            return NewModExpression(first,second);
+            return new NewModExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -945,7 +945,7 @@ ValidarSemantica(NotExpression)
     {
         if(/* validar que sea boleano*/)
         {
-            return NewRotExpression(first);
+            return new NewRotExpression(first);
         }
         ErrorSemantico("Error: Tipo Incompatibles");
         return NULL;
@@ -976,5 +976,27 @@ ValidarSemantica(IfStatement)
         if(newFalseBlock == NULL)
             return NULL;
     }
-    return NewIfStatement(newCondition,newTrueBlock,newFalseBlock);
+    return new NewIfStatement(newCondition,newTrueBlock,newFalseBlock);
+}
+
+ValidarSemantica(WhileStatement)
+{
+    NewStatement *newCondition = condition->ValidarSemantica();
+    if(newCondition == NULL)
+        return NULL;
+    if(/*vaidar tipo*/)
+    {
+        ErrorSemantico("Error: Condicion if debe se bool");
+        return NULL;                       
+    }
+
+    NewStatement *newStatementTrue = statementTrue->ValidarSemantica();
+    if(newStatementTrue == NULL)
+        return NULL;
+
+    return new NewWhileStatement(newCondition,newStatementTrue);
+}
+ValidarSemantica(ForStatement)
+{
+
 }
