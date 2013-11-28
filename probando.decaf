@@ -1,0 +1,6 @@
+class probando{
+  int x;
+  void hola(int uno,int dos){
+ 
+  }
+}

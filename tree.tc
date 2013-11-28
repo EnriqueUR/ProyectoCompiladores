@@ -1,0 +1,958 @@
+%decls %{
+  #include <list>
+  #include <iostream>
+  using namespace std;
+  
+  #include "Value.h"
+  #include "Util.h"
+  class Expression;
+  class Statement;
+  class AssignStatement;
+  class VariableDef;
+  class MethodDef;
+  class ConstantExpression;
+  class ParameterDef;
+  class BlockStatement;
+  class LValueExpression;
+  void AddStatement(BlockStatement *block,Statement *stm);
+  typedef list<Statement *> StatementList;
+  typedef list<Expression *> ExpressionList;
+  typedef list<AssignStatement *> AssignList;
+  typedef list<VariableDef *> VariableDefList;
+  typedef list<MethodDef *> MethodDefList;
+  typedef list<ParameterDef *> ParameterDefList;
+  
+  /*Preguntar donde se tinen que crear las nuevas listas de expresiones y sentencias */
+
+  typedef enum {OpAdd,OpSub,OpMul,OpDiv,OpMod,OpAnd,OpOr,OpNot,OpGT,OpLT,OpGTE,
+  OpLTE,OpEq,OpNotEq,OpRShift,OpLShift,OpRot} ExpressionOperator;
+%}
+
+%{
+#include "tree.h"
+%}
+
+%option lang="C++"
+
+%node Main %typedef = {
+      StatementList *list;
+}
+
+%node TheClass %abstract %typedef
+
+%node Expression TheClass %abstract %typedef
+%node Statement TheClass %abstract %typedef
+
+%operation %virtual string ToString(TheClass *this)
+
+
+
+%node ClassDef TheClass %typedef = {
+    string className;
+    VariableDefList *listVariable;
+    MethodDefList *listMethod;   
+}
+
+%node BinaryExpression Expression %abstract = {
+      Expression *FirstExpression;
+      Expression *SecondExpression;
+}
+
+%node UnaryExpression Expression %abstract = {
+      Expression *FirstExpression;
+}
+
+%node ConstantExpression Expression %abstract
+
+%node MethodCallExpression Expression = {
+    string id;
+    ExpressionList *parameters;
+}
+
+%node ConstantIntExpression ConstantExpression = {
+    int constant;
+}
+
+%node ConstantBoolExpression ConstantExpression = {
+    bool constant;
+}
+
+%node ConstantCharExpression ConstantExpression = {
+    char constant;
+}
+
+%node ConstantStringExpression ConstantExpression = {
+    string constant;
+}
+
+%node LValueExpression Expression = {
+    string id;
+    %nocreate Expression *expr;
+}
+
+%node AddExpression BinaryExpression
+%node SubExpression BinaryExpression
+%node MultExpression BinaryExpression
+%node DivExpression BinaryExpression
+%node LessThanExpression BinaryExpression
+%node LessThanEqualExpression BinaryExpression
+%node BigerThanExpression BinaryExpression
+%node BigerThanEqualExpression BinaryExpression
+%node EqualExpression BinaryExpression
+%node NotEqualExpression BinaryExpression
+%node ShiftRightExpression BinaryExpression
+%node ShiftLeftExpression BinaryExpression
+%node RotExpression BinaryExpression
+%node OrExpression BinaryExpression
+%node AndExpression BinaryExpression
+%node NotExpression UnaryExpression
+%node ModExpression BinaryExpression
+
+%node ParameterDef Expression = {
+    string id;
+    Type parameterType;
+}
+
+%node VariableDef Statement = {
+    string id;
+    int first_line;
+    int first_column;
+    %nocreate Expression *initial_value;
+    %nocreate bool isArrayDef;
+    %nocreate int array_dimension;
+    %nocreate Type variable_type;
+}
+
+%node MethodDef Statement = {
+    string id;
+    %nocreate Statement *block;
+    %nocreate ParameterDefList *parameters;
+    %nocreate Type returnType;
+     
+}
+
+%node IfStatement Statement = {
+    Expression *condition;
+    Statement *statementTrue;
+    Statement *statementFalse;
+    int first_line;
+    int first_column;
+}
+
+%node WhileStatement Statement = {
+    Expression *condition;
+    Statement *statementTrue;
+    int first_line;
+    int first_column;
+}
+
+%node ForStatement Statement = {
+    Statement *firstListAssign;
+    Expression *condition;
+    Statement *lasttListAssign;
+    Statement *statementTrue;   
+    int first_line;
+    int first_column;
+}
+
+%node AssignStatement Statement = {
+    Expression *leftValue;
+    Expression *value;
+    int first_line;
+    int first_column;
+}
+
+%node ReadStatement Statement = {
+    ExpressionList *listExpression;
+    int first_line;
+    int first_column;
+}
+
+%node PrintStatement Statement = {
+    ExpressionList *listExpression;
+    int first_line;
+    int first_column;
+}
+
+%node MethodCallStatement Statement = {
+    string name;
+    ExpressionList *parameters;
+    int first_line;
+    int first_column;
+}
+
+%node ReturnStatement Statement = {
+    Expression *returnExpression;
+    int first_line;
+    int first_column;
+}
+
+%node BreakStatement Statement = {
+    int first_line;
+    int first_column;
+}
+
+%node ContinueStatement Statement = {
+    int first_line;
+    int first_column;
+}
+
+%node BlockStatement Statement = {
+    %nocreate StatementList *listStatements;
+    int first_line;
+    int first_column;
+}
+
+%operation %virtual void AddStatement([BlockStatement *this],Statement *stm)
+AddStatement(BlockStatement)
+{
+    if(listStatements == 0)
+      listStatements = new StatementList();
+      
+    listStatements->push_back(stm);
+}
+
+ToString(MethodCallExpression)
+{
+    ostringstream out;
+
+    out << this->id << "(" << ListToString(parameters, ", ", false) << ")";
+
+    return out.str();
+}
+ToString(AddExpression)
+{
+    ostringstream out;
+    out << this->FirstExpression->ToString() << "+" << this->SecondExpression->ToString();
+    return out.str();
+}
+ToString(SubExpression)
+{
+    ostringstream out;
+    out << this->FirstExpression->ToString() << "-" << this->SecondExpression->ToString();
+    return out.str();
+}
+ToString(MultExpression)
+{
+    ostringstream out;
+    out << this->FirstExpression->ToString() << "*" << this->SecondExpression->ToString();
+    return out.str();
+}
+ToString(DivExpression)
+{
+    ostringstream out;
+    out << this->FirstExpression->ToString() << "/" << this->SecondExpression->ToString();
+    return out.str();
+}
+ToString(LessThanExpression)
+{
+    ostringstream out;
+    out << this->FirstExpression->ToString() << "<" << this->SecondExpression->ToString();
+    return out.str();
+}
+ToString(LessThanEqualExpression)
+{
+    ostringstream out;
+    out << this->FirstExpression->ToString() << "<=" << this->SecondExpression->ToString();
+    return out.str();
+}
+ToString(BigerThanExpression)
+{
+    ostringstream out;
+    out << this->FirstExpression->ToString() << ">" << this->SecondExpression->ToString();
+    return out.str();
+}
+ToString(BigerThanEqualExpression)
+{
+    ostringstream out;
+    out << this->FirstExpression->ToString() << ">=" << this->SecondExpression->ToString();
+    return out.str();
+}
+ToString(EqualExpression)
+{
+    ostringstream out;
+    out << this->FirstExpression->ToString() << "==" << this->SecondExpression->ToString();
+    return out.str();
+}
+ToString(NotEqualExpression)
+{
+    ostringstream out;
+    out << this->FirstExpression->ToString() << "!=" << this->SecondExpression->ToString();
+    return out.str();
+}
+ToString(ShiftRightExpression)
+{
+    ostringstream out;
+    out << this->FirstExpression->ToString() << ">>" << this->SecondExpression->ToString();
+    return out.str();
+}
+ToString(ShiftLeftExpression)
+{
+    ostringstream out;
+    out << this->FirstExpression->ToString() << "<<" << this->SecondExpression->ToString();
+    return out.str();
+}
+ToString(RotExpression)
+{
+    ostringstream out;
+    out << this->FirstExpression->ToString() << "rot" << this->SecondExpression->ToString();
+    return out.str();
+}
+ToString(NotExpression)
+{
+    ostringstream out;
+    out <<  "!" << this->FirstExpression->ToString();
+    return out.str();
+}
+ToString(AndExpression)
+{
+    ostringstream out;
+    out << this->FirstExpression->ToString() << "&&" << this->SecondExpression->ToString();
+    return out.str();
+}
+ToString(OrExpression)
+{
+    ostringstream out;
+    out << this->FirstExpression->ToString() << "||" << this->SecondExpression->ToString();
+    return out.str();
+}
+ToString(ModExpression)
+{
+    ostringstream out;
+    out << this->FirstExpression->ToString() << "%" << this->SecondExpression->ToString();
+    return out.str();
+}
+ToString(ConstantIntExpression)
+{
+    ostringstream out;
+    out << this->constant;
+    return out.str();
+}
+
+ToString(ConstantBoolExpression)
+{
+    ostringstream out;
+    out << this->constant;
+    return out.str();
+}
+
+ToString(ConstantStringExpression)
+{
+    ostringstream out;
+    out << this->constant;
+    return out.str();
+}
+
+ToString(ConstantCharExpression)
+{
+    ostringstream out;
+    out << this->constant;
+    return out.str();
+}
+
+ToString(LValueExpression)
+{
+    ostringstream out;
+
+    out << this->id;
+
+    if (expr != 0)
+	out << "[" << expr->ToString() << "]";
+
+    return out.str();
+}
+
+ToString(ParameterDef)
+{
+    ostringstream out;    
+    out << TypeToString(parameterType) << " " << id; 
+    return out.str();
+}
+
+ToString(MethodDef)
+{
+    ostringstream out;
+    out << TypeToString(returnType) << " " << id << "(";
+    if (parameters != 0)
+      out << ListToString(parameters, ",", false);
+    out << ")" << endl;
+    out << block->ToString();
+    return out.str();
+}
+
+ToString(VariableDef)
+{
+    ostringstream out;
+    out << TypeToString(variable_type) << " " << id;
+    if(isArrayDef){
+	out << "[" << array_dimension << "]";
+    }else if(initial_value != 0){
+	out << "=" << initial_value->ToString();
+    }
+    out << ";";
+    return out.str();
+}
+
+ToString(ReadStatement)
+{
+    ostringstream out;
+    out << "read ";
+    if (listExpression != 0)
+	out << ListToString(listExpression, ",", false);
+    return out.str();
+}
+
+ToString(PrintStatement)
+{
+    ostringstream out;
+    out << "print ";
+    if (listExpression != 0)
+	out << ListToString(listExpression, ",", false);
+    out << ";";
+    return out.str();
+}
+
+ToString(IfStatement)
+{
+    ostringstream out;
+
+	out << "if (" << condition->ToString() << ")" << endl;
+	out << statementTrue->ToString() << endl;
+
+	if (statementFalse != 0) {
+		out << "else" << endl;
+		out << statementFalse->ToString() << endl;
+	}
+
+    return out.str();
+}
+
+ToString(WhileStatement)
+{
+    ostringstream out;
+	out << "while (" << condition->ToString() << ")" << endl;
+	out << "{" << statementTrue->ToString() << endl << "}";
+    return out.str();
+}
+
+ToString(ForStatement)
+{
+    ostringstream out;
+    out << "for(";
+    out << firstListAssign->ToString() << ";" << condition->ToString() << ";" << lasttListAssign->ToString() <<")";
+    out << statementTrue->ToString();
+
+    return out.str();
+}
+
+ToString(AssignStatement)
+{
+   ostringstream out;
+	out << "// Linea " << first_line << " Columna " << first_column << "\n"; 
+	out << leftValue->ToString() << " = " << value->ToString() << ";";
+   return out.str();
+}
+
+ToString(MethodCallStatement)
+{
+    return this->name + "(" + ListToString(parameters, ", ", false) + ");";
+}
+
+ToString(ReturnStatement)
+{
+    return "return " + returnExpression->ToString() + ";";
+}
+
+ToString(BreakStatement)
+{
+    return "break;";
+}
+
+ToString(ContinueStatement)
+{
+    return "continue;";
+}
+
+ToString(BlockStatement)
+{
+    ostringstream out;
+
+	out << "{" << endl;
+
+	if (listStatements != 0)
+		out << ListToString(listStatements, "\n", true);
+
+	out << "}";
+
+    return out.str();
+}
+ToString(ClassDef)
+{
+  ostringstream out;
+  out << "class " << className << "{" << endl; 
+  if (listVariable != 0)
+      out << ListToString(listVariable, "\n", true);
+  if (listMethod != 0)
+      out << ListToString(listMethod, "\n", true);
+  out << "}";
+  return out.str(); 
+}
+
+/************** Arbol decorado ****************/
+
+%node TheNewClass %abstract %typedef
+
+%node ClassDef TheNewClass %typedef = {
+    string className;
+    VariableDefList *listVariable;
+    MethodDefList *listMethod;   
+}
+%node ErrorSemantico %typedef = {
+    string msj;
+}
+
+ErrorSemantico()
+{
+    cout << msj;
+}
+
+%node NewExpression TheNewClass %abstract %typedef
+%node NewStatement TheNewClass %abstract %typedef
+%operation %virtual ValidarSemantica(TheNewClass *this)
+
+/* Aqui comienzan las expresiones decoradas */
+%node NewConstantExpression NewExpression %abstract
+%node NewConstantIntExpression NewConstantExpression = {
+    int Newconstant;
+}
+
+%node NewConstantBoolExpression NewConstantExpression = {
+    bool Newconstant;
+}
+
+%node NewConstantCharExpression NewConstantExpression = {
+    char Newconstant;
+}
+
+%node NewBinaryExpression NewExpression %abstract = {
+    Type type;
+    NewExpression *NewFirstExpression;
+    NewExpression *NewSecondExpression;
+}
+
+%node NewUnaryExpression NewExpression %abstract = {
+    Type type;
+    NewExpression *NewFirstExpression;
+}
+
+%node NewParameterDef NewExpression = {
+    string NewId;
+    Type NewParameterType;
+}
+
+%node NewLValueExpression NewExpression = {
+    string NewId;
+    %nocreate NewExpression *NewExpr;
+}
+
+%node NewMethodCallExpression NewExpression = {
+    string NewId;
+    NewExpressionList *NewParameters;
+}
+
+%node NewAddExpression BinaryExpression
+%node NewSubExpression BinaryExpression
+%node NewMultExpression BinaryExpression
+%node NewDivExpression BinaryExpression
+%node NewLessThanExpression BinaryExpression
+%node NewLessThanEqualExpression BinaryExpression
+%node NewBigerThanExpression BinaryExpression
+%node NewBigerThanEqualExpression BinaryExpression
+%node NewEqualExpression BinaryExpression
+%node NewNotEqualExpression BinaryExpression
+%node NewShiftRightExpression BinaryExpression
+%node NewShiftLeftExpression BinaryExpression
+%node NewRotExpression BinaryExpression
+%node NewOrExpression BinaryExpression
+%node NewAndExpression BinaryExpression
+%node NewNotExpression UnaryExpression
+%node NewModExpression BinaryExpression
+
+
+
+ValidarSemantica(NewAddExpression)
+{
+    NewFirstExpression = NewFirstExpression->ValidarSemantica();
+    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+
+    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    {
+        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        {
+            type = NewConstantIntExpression;
+            return NewAddExpression(NewFirstExpression,NewSecondExpression,type);
+        }
+        ErrorSemantico("Error: Tipos Incompatibles");
+        return NULL;
+    }
+    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
+    return NULL;
+}
+
+ValidarSemantica(NewSubExpression)
+{
+    NewFirstExpression = NewFirstExpression->ValidarSemantica();
+    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+
+    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    {
+        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        {
+            type = NewConstantIntExpression;
+            return NewSubExpression(NewFirstExpression,NewSecondExpression,type);
+        }
+        ErrorSemantico("Error: Tipos Incompatibles");
+        return NULL;
+    }
+    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
+    return NULL;
+}
+
+ValidarSemantica(NewMultExpression)
+{
+    NewFirstExpression = NewFirstExpression->ValidarSemantica();
+    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+
+    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    {
+        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        {
+            type = NewConstantIntExpression;
+            return NewMultExpression(NewFirstExpression,NewSecondExpression,type);
+        }
+        ErrorSemantico("Error: Tipos Incompatibles");
+        return NULL;
+    }
+    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
+    return NULL;
+}
+
+ValidarSemantica(NewDivExpression)
+{
+    NewFirstExpression = NewFirstExpression->ValidarSemantica();
+    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+
+    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    {
+        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        {
+            type = NewConstantIntExpression;
+            return NewDivExpression(NewFirstExpression,NewSecondExpression,type);
+        }
+        ErrorSemantico("Error: Tipos Incompatibles");
+        return NULL;
+    }
+    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
+    return NULL;
+}
+
+ValidarSemantica(NewLessThanExpression)
+{
+    NewFirstExpression = NewFirstExpression->ValidarSemantica();
+    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+
+    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    {
+        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        {
+            type = NewConstantIntExpression;
+            return NewLessThanExpression(NewFirstExpression,NewSecondExpression,type);
+        }
+        ErrorSemantico("Error: Tipos Incompatibles");
+        return NULL;
+    }
+    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
+    return NULL;
+}
+
+ValidarSemantica(NewBigerThanExpression)
+{
+    NewFirstExpression = NewFirstExpression->ValidarSemantica();
+    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+
+    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    {
+        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        {
+            type = NewConstantIntExpression;
+            return NewBinaryExpression(NewFirstExpression,NewSecondExpression,type);
+        }
+        ErrorSemantico("Error: Tipos Incompatibles");
+        return NULL;
+    }
+    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
+    return NULL;
+}
+
+ValidarSemantica(NewLessThanEqualExpression)
+{
+    NewFirstExpression = NewFirstExpression->ValidarSemantica();
+    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+
+    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    {
+        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        {
+            type = NewConstantIntExpression;
+            return NewLessThanEqualExpression(NewFirstExpression,NewSecondExpression,type);
+        }
+        ErrorSemantico("Error: Tipos Incompatibles");
+        return NULL;
+    }
+    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
+    return NULL;
+}
+
+ValidarSemantica(NewBigerThanEqualExpression)
+{
+    NewFirstExpression = NewFirstExpression->ValidarSemantica();
+    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+
+    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    {
+        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        {
+            type = NewConstantIntExpression;
+            return NewBigerThanEqualExpression(NewFirstExpression,NewSecondExpression,type);
+        }
+        ErrorSemantico("Error: Tipos Incompatibles");
+        return NULL;
+    }
+    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
+    return NULL;
+}
+
+ValidarSemantica(NewEqualExpression)
+{
+    NewFirstExpression = NewFirstExpression->ValidarSemantica();
+    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+
+    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    {
+        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        {
+            type = NewConstantIntExpression;
+            return NewEqualExpression(NewFirstExpression,NewSecondExpression,type);
+        }
+        ErrorSemantico("Error: Tipos Incompatibles");
+        return NULL;
+    }
+    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
+    return NULL;
+}
+
+ValidarSemantica(NewNotEqualExpression)
+{
+    NewFirstExpression = NewFirstExpression->ValidarSemantica();
+    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+
+    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    {
+        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        {
+            type = NewConstantIntExpression;
+            return NewNotEqualExpression(NewFirstExpression,NewSecondExpression,type);
+        }
+        ErrorSemantico("Error: Tipos Incompatibles");
+        return NULL;
+    }
+    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
+    return NULL;
+}
+
+ValidarSemantica(NewShiftLeftExpression)
+{
+    NewFirstExpression = NewFirstExpression->ValidarSemantica();
+    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+
+    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    {
+        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        {
+            type = NewConstantIntExpression;
+            return NewShiftLeftExpression(NewFirstExpression,NewSecondExpression,type);
+        }
+        ErrorSemantico("Error: Tipos Incompatibles");
+        return NULL;
+    }
+    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
+    return NULL;
+}
+
+ValidarSemantica(NewShiftRightExpression)
+{
+    NewFirstExpression = NewFirstExpression->ValidarSemantica();
+    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+
+    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    {
+        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        {
+            type = NewConstantIntExpression;
+            return NewShiftLeftExpression(NewFirstExpression,NewSecondExpression,type);
+        }
+        ErrorSemantico("Error: Tipos Incompatibles");
+        return NULL;
+    }
+    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
+    return NULL;
+}
+
+ValidarSemantica(NewRotExpression)
+{
+    NewFirstExpression = NewFirstExpression->ValidarSemantica();
+    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+
+    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    {
+        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        {
+            type = NewConstantIntExpression;
+            return NewRotExpression(NewFirstExpression,NewSecondExpression,type);
+        }
+        ErrorSemantico("Error: Tipos Incompatibles");
+        return NULL;
+    }
+    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
+    return NULL;
+}
+ValidarSemantica(NewOrExpression)
+{
+    NewFirstExpression = NewFirstExpression->ValidarSemantica();
+    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+
+    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    {
+        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        {
+            type = NewConstantBoolExpression;
+            return NewOrExpression(NewFirstExpression,NewSecondExpression,type);
+        }
+        ErrorSemantico("Error: Tipos Incompatibles");
+        return NULL;
+    }
+    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
+    return NULL;
+}
+
+ValidarSemantica(NewAndExpression)
+{
+    NewFirstExpression = NewFirstExpression->ValidarSemantica();
+    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+
+    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    {
+        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        {
+            type = NewConstantBoolExpression;
+            return NewAndExpression(NewFirstExpression,NewSecondExpression,type);
+        }
+        ErrorSemantico("Error: Tipos Incompatibles");
+        return NULL;
+    }
+    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
+    return NULL;
+}
+ValidarSemantica(NewModExpression)
+{
+    NewFirstExpression = NewFirstExpression->ValidarSemantica();
+    NewSecondExpression = NewSecondExpression->ValidarSemantica();
+
+    if(NewFirstExpression != NULL && NewSecondExpression != NULL)
+    {
+        if((NewFirstExpression->type == NewSecondExpression->type) /* validar que sea entero*/)
+        {
+            type = NewConstantIntExpression;
+            return NewAndExpression(NewFirstExpression,NewSecondExpression,type);
+        }
+        ErrorSemantico("Error: Tipos Incompatibles");
+        return NULL;
+    }
+    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
+    return NULL;
+}
+
+ValidarSemantica(NewNotExpression)
+{
+    NewFirstExpression = NewFirstExpression->ValidarSemantica();
+    
+    if(NewFirstExpression != NULL )
+    {
+        if(/* validar que sea boleano*/)
+        {
+            type = NewConstantBoolExpression;
+            return NewRotExpression(NewFirstExpression,type);
+        }
+        ErrorSemantico("Error: Tipo Incompatibles");
+        return NULL;
+    }
+    ErrorSemantico("Error: No se pudo Evaluar la Expresion");
+    return NULL;
+}
+
+/* Aqui terminana las expresiones decoradas */
+/* Aqui comienzan los statements decorados */
+%node NewVariableDef NewStatement = {
+
+}
+
+%node NewMethodDef NewStatement = {
+     
+}
+
+%node NewIfStatement NewStatement = {
+    NewExpression *NewCondition;
+    NewStatement *NewStatementTrue;
+    NewStatement *NewStatementFalse;
+}
+
+%node NewWhileStatement NewStatement = {
+
+}
+
+%node NewForStatement NewStatement = {
+
+}
+
+%node NewAssignStatement NewStatement = {
+
+}
+
+%node NewReadStatement NewStatement = {
+
+}
+
+%node NewPrintStatement NewStatement = {
+
+}
+
+%node NewMethodCallStatement NewStatement = {
+
+}
+
+%node NewReturnStatement NewStatement = {
+
+}
+
+%node NewBreakStatement NewStatement = {
+
+}
+
+%node NewContinueStatement NewStatement = {
+
+}
+
+%node NewBlockStatement NewStatement = {
+
+}
+/* Aqui teminan los statements decorados */
