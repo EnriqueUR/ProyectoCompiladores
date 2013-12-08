@@ -13,6 +13,7 @@
   class ConstantExpression;
   class ParameterDef;
   class BlockStatement;
+  class Procedimiento;
   class LValueExpression;
   void AddStatement(BlockStatement *block,Statement *stm);
   typedef list<Statement *> StatementList;
@@ -31,10 +32,48 @@
   typedef list<NewVariableDef *> NewVariableDefList;
   typedef list<NewMethodDef *> NewMethodDefList;
   typedef list<NewParameterDef *> NewParameterDefList;
+  
+  Contexto contextos[10];
+  int currentContexto ; 
+
+  typedef map<string,Procedimiento *> methodDeclared;
+  map<string,Variable *> contextoMap
+
+  typedef list<string> listIfLabel;
+  typedef list<string> listElseLabel;
+  typedef list<string> listEndIfLabel;
+  typedef list<string> listWhileLabel;
+  typedef list<string> listEndWhileLabel;
+  typedef list<string> listForLabel;
+  typedef list<string> listEndForLabel;
+  typedef list<string> listIfLabel;
+  typedef list<string> listElseLabel;
+  typedef list<string> listEndIfLabel;
+  typedef list<string> listWhileLabel;
+  typedef list<string> listEndWhileLabel;
+  typedef list<string> listForLabel;
+  typedef list<string> listEndForLabel;
+
+  typedef list<string> stackCurrentLabel;
+
 %}
 
 %{
 #include "tree.h"
+/*Pendiente
+map<string , bool> mapTemporalRegister;
+void FreeRegister(string register)
+{
+    mapTemporalRegister[register] = true;
+} 
+string getFreeRegister()
+{
+    for( map<string,bool>::iterator i=mapTemporalRegister.begin(); i!=mapTemporalRegister.end(); ++i)
+     {
+        if((*i))
+     }
+}
+///////*/
 %}
 
 %option lang="C++"
@@ -44,13 +83,13 @@
 }
 
 %node TheClass %abstract %typedef
+%node TheNewClass %abstract %typedef
 
 %node Expression TheClass %abstract %typedef
 %node Statement TheClass %abstract %typedef
 
 %operation %virtual string ToString(TheClass *this)
 %operation %virtual TheNewClass ValidarSemantica(TheClass *this)
-%operation %virtual void AddStatement([BlockStatement *this],Statement *stm)
 
 
 %node ClassDef TheClass %typedef = {
@@ -60,12 +99,12 @@
 }
 
 %node BinaryExpression Expression %abstract = {
-      Expression *FirstExpression;
-      Expression *SecondExpression;
+      Expression *firstExpression;
+      Expression *secondExpression;
 }
 
 %node UnaryExpression Expression %abstract = {
-      Expression *FirstExpression;
+      Expression *firstExpression;
 }
 
 %node ConstantExpression Expression %abstract
@@ -155,7 +194,7 @@
 %node ForStatement Statement = {
     Statement *firstListAssign;
     Expression *condition;
-    Statement *lasttListAssign;
+    Statement *lastListAssign;
     Statement *statementTrue;   
     int first_line;
     int first_column;
@@ -208,27 +247,43 @@
     int first_line;
     int first_column;
 }
+%operation %virtual void AddStatement([BlockStatement *this],Statement *stm)
 
 /************** Arbol decorado ****************/
 
-%node TheNewClass %abstract %typedef
 
-%node ClassDef TheNewClass %typedef = {
+
+%node NewClassDef TheNewClass %typedef = {
     string className;
-    VariableDefList *listVariable;
-    MethodDefList *listMethod;   
+    NewBlockStatement *newBlockStatement;
 }
 %node ErrorSemantico %typedef = {
     string msj;
 }
 
-ErrorSemantico()
-{
-    cout << msj;
-}
-
 %node NewExpression TheNewClass %abstract %typedef
 %node NewStatement TheNewClass %abstract %typedef
+%operation %virtual string GenerarCodigo(TheNewClass *this)
+
+%node Contexto %typedef = {
+    contextoMap contextoMap;
+    int currentOffset;
+    int currentLevel;
+    Contexto *contextoAnterior;
+}
+%node Variable %typedef = {
+    int offset;
+    int level;
+    NewExpression *value;
+    bool isArray;
+    int dimension;
+    Type type;
+}
+
+%node Procedimiento %typedef= {
+  string id;
+  NewBlockStatement *newBlockStatement;
+}
 
 /* Aqui comienzan las expresiones decoradas */
 %node NewConstantExpression NewExpression %abstract
@@ -246,113 +301,105 @@ ErrorSemantico()
 
 %node NewBinaryExpression NewExpression %abstract = {
     Type type;
-    NewExpression *NewFirstExpression;
-    NewExpression *NewSecondExpression;
+    string place;
+    NewExpression *newfirstExpression;
+    NewExpression *newSecondExpression;
 }
 
 %node NewUnaryExpression NewExpression %abstract = {
     Type type;
-    NewExpression *NewFirstExpression;
+    string place;
+    NewExpression *newfirstExpression;
 }
 
 %node NewParameterDef NewExpression = {
     string NewId;
-    Type NewParameterType;
+    Type newParameterType;
 }
 
 %node NewLValueExpression NewExpression = {
-    string NewId;
-    %nocreate NewExpression *NewExpr;
+    string newId;
+    %nocreate NewExpression *newExpr;
 }
 
 %node NewMethodCallExpression NewExpression = {
-    string NewId;
-    NewExpressionList *NewParameters;
+    string newId;
+    NewExpressionList *newParameters;
 }
 
-%node NewAddExpression BinaryExpression
-%node NewSubExpression BinaryExpression
-%node NewMultExpression BinaryExpression
-%node NewDivExpression BinaryExpression
-%node NewLessThanExpression BinaryExpression
-%node NewLessThanEqualExpression BinaryExpression
-%node NewBigerThanExpression BinaryExpression
-%node NewBigerThanEqualExpression BinaryExpression
-%node NewEqualExpression BinaryExpression
-%node NewNotEqualExpression BinaryExpression
-%node NewShiftRightExpression BinaryExpression
-%node NewShiftLeftExpression BinaryExpression
-%node NewRotExpression BinaryExpression
-%node NewOrExpression BinaryExpression
-%node NewAndExpression BinaryExpression
-%node NewNotExpression UnaryExpression
-%node NewModExpression BinaryExpression
+%node NewAddExpression NewBinaryExpression
+%node NewSubExpression NewBinaryExpression
+%node NewMultExpression NewBinaryExpression
+%node NewDivExpression NewBinaryExpression
+%node NewLessThanExpression NewBinaryExpression
+%node NewLessThanEqualExpression NewBinaryExpression
+%node NewBigerThanExpression NewBinaryExpression
+%node NewBigerThanEqualExpression NewBinaryExpression
+%node NewEqualExpression NewBinaryExpression
+%node NewNotEqualExpression NewBinaryExpression
+%node NewShiftRightExpression NewBinaryExpression
+%node NewShiftLeftExpression NewBinaryExpression
+%node NewRotExpression NewBinaryExpression
+%node NewOrExpression NewBinaryExpression
+%node NewAndExpression NewBinaryExpression
+%node NewNotExpression NewUnaryExpression
+%node NewModExpression NewBinaryExpression
 
 /* Aqui terminana las expresiones decoradas */
 
 /* Aqui comienzan los statements decorados */
-%node NewVariableDef NewStatement = {
-
-}
-
-%node NewMethodDef NewStatement = {
-     
-}
 
 %node NewIfStatement NewStatement = {
-    NewExpression *NewCondition;
-    NewStatement *NewStatementTrue;
-    NewStatement *NewStatementFalse;
+    NewExpression *newCondition;
+    NewStatement *newStatementTrue;
+    NewStatement *newStatementFalse;
 }
 
 %node NewWhileStatement NewStatement = {
-    NewExpression *NewCondition;
-    NewStatement *NewStatementTrue;
+    NewExpression *newCondition;
+    NewStatement *newStatementTrue;
 }
 
 %node NewForStatement NewStatement = {
-    NewStatement *NewFirstListAssign;
-    NewExpression *NewCondition;
-    NewStatement *NewLasttListAssign;
-    NewStatement *NewStatementTrue;  
+    NewStatement *newFirstListAssign;
+    NewExpression *newCondition;
+    NewStatement *newLastListAssign;
+    NewStatement *newStatementTrue;  
 }
 
 %node NewAssignStatement NewStatement = {
-    NewExpression *NewLeftValue;
-    NewExpression *NewValue;
+    NewExpression *newLeftValue;
+    NewExpression *newValue;
 }
 
 %node NewReadStatement NewStatement = {
-    NewExpressionList *NewListExpression;
+    NewExpressionList *newListExpression;
 }
 
 %node NewPrintStatement NewStatement = {
-    NewExpressionList *NewListExpression;
+    NewExpressionList *newListExpression;
 }
 
 %node NewMethodCallStatement NewStatement = {
-    NewExpressionList *NewParameters;
+  string id;
+  NewExpressionList *newParameters;
 }
 
 %node NewReturnStatement NewStatement = {
-    NewExpression *NewReturnExpression;
+    NewExpression *newReturnExpression;
 }
 
 %node NewBreakStatement NewStatement = {
-
 }
 
 %node NewContinueStatement NewStatement = {
-
 }
 
 %node NewBlockStatement NewStatement = {
-    %nocreate StatementList *listStatements;
+    %nocreate NewStatementList *newListStatements;
 }
 
 /*Aqui termina el arbol decorado*/
-
-
 AddStatement(BlockStatement)
 {
     if(listStatements == 0)
@@ -372,103 +419,103 @@ ToString(MethodCallExpression)
 ToString(AddExpression)
 {
     ostringstream out;
-    out << this->FirstExpression->ToString() << "+" << this->SecondExpression->ToString();
+    out << this->firstExpression->ToString() << "+" << this->secondExpression->ToString();
     return out.str();
 }
 ToString(SubExpression)
 {
     ostringstream out;
-    out << this->FirstExpression->ToString() << "-" << this->SecondExpression->ToString();
+    out << this->firstExpression->ToString() << "-" << this->secondExpression->ToString();
     return out.str();
 }
 ToString(MultExpression)
 {
     ostringstream out;
-    out << this->FirstExpression->ToString() << "*" << this->SecondExpression->ToString();
+    out << this->firstExpression->ToString() << "*" << this->secondExpression->ToString();
     return out.str();
 }
 ToString(DivExpression)
 {
     ostringstream out;
-    out << this->FirstExpression->ToString() << "/" << this->SecondExpression->ToString();
+    out << this->firstExpression->ToString() << "/" << this->secondExpression->ToString();
     return out.str();
 }
 ToString(LessThanExpression)
 {
     ostringstream out;
-    out << this->FirstExpression->ToString() << "<" << this->SecondExpression->ToString();
+    out << this->firstExpression->ToString() << "<" << this->secondExpression->ToString();
     return out.str();
 }
 ToString(LessThanEqualExpression)
 {
     ostringstream out;
-    out << this->FirstExpression->ToString() << "<=" << this->SecondExpression->ToString();
+    out << this->firstExpression->ToString() << "<=" << this->secondExpression->ToString();
     return out.str();
 }
 ToString(BigerThanExpression)
 {
     ostringstream out;
-    out << this->FirstExpression->ToString() << ">" << this->SecondExpression->ToString();
+    out << this->firstExpression->ToString() << ">" << this->secondExpression->ToString();
     return out.str();
 }
 ToString(BigerThanEqualExpression)
 {
     ostringstream out;
-    out << this->FirstExpression->ToString() << ">=" << this->SecondExpression->ToString();
+    out << this->firstExpression->ToString() << ">=" << this->secondExpression->ToString();
     return out.str();
 }
 ToString(EqualExpression)
 {
     ostringstream out;
-    out << this->FirstExpression->ToString() << "==" << this->SecondExpression->ToString();
+    out << this->firstExpression->ToString() << "==" << this->secondExpression->ToString();
     return out.str();
 }
 ToString(NotEqualExpression)
 {
     ostringstream out;
-    out << this->FirstExpression->ToString() << "!=" << this->SecondExpression->ToString();
+    out << this->firstExpression->ToString() << "!=" << this->secondExpression->ToString();
     return out.str();
 }
 ToString(ShiftRightExpression)
 {
     ostringstream out;
-    out << this->FirstExpression->ToString() << ">>" << this->SecondExpression->ToString();
+    out << this->firstExpression->ToString() << ">>" << this->secondExpression->ToString();
     return out.str();
 }
 ToString(ShiftLeftExpression)
 {
     ostringstream out;
-    out << this->FirstExpression->ToString() << "<<" << this->SecondExpression->ToString();
+    out << this->firstExpression->ToString() << "<<" << this->secondExpression->ToString();
     return out.str();
 }
 ToString(RotExpression)
 {
     ostringstream out;
-    out << this->FirstExpression->ToString() << "rot" << this->SecondExpression->ToString();
+    out << this->firstExpression->ToString() << "rot" << this->secondExpression->ToString();
     return out.str();
 }
 ToString(NotExpression)
 {
     ostringstream out;
-    out <<  "!" << this->FirstExpression->ToString();
+    out <<  "!" << this->firstExpression->ToString();
     return out.str();
 }
 ToString(AndExpression)
 {
     ostringstream out;
-    out << this->FirstExpression->ToString() << "&&" << this->SecondExpression->ToString();
+    out << this->firstExpression->ToString() << "&&" << this->secondExpression->ToString();
     return out.str();
 }
 ToString(OrExpression)
 {
     ostringstream out;
-    out << this->FirstExpression->ToString() << "||" << this->SecondExpression->ToString();
+    out << this->firstExpression->ToString() << "||" << this->secondExpression->ToString();
     return out.str();
 }
 ToString(ModExpression)
 {
     ostringstream out;
-    out << this->FirstExpression->ToString() << "%" << this->SecondExpression->ToString();
+    out << this->firstExpression->ToString() << "%" << this->secondExpression->ToString();
     return out.str();
 }
 ToString(ConstantIntExpression)
@@ -506,7 +553,7 @@ ToString(LValueExpression)
     out << this->id;
 
     if (expr != 0)
-	out << "[" << expr->ToString() << "]";
+      out << "[" << expr->ToString() << "]";
 
     return out.str();
 }
@@ -534,9 +581,9 @@ ToString(VariableDef)
     ostringstream out;
     out << TypeToString(variable_type) << " " << id;
     if(isArrayDef){
-	out << "[" << array_dimension << "]";
+      out << "[" << array_dimension << "]";
     }else if(initial_value != 0){
-	out << "=" << initial_value->ToString();
+      out << "=" << initial_value->ToString();
     }
     out << ";";
     return out.str();
@@ -547,7 +594,7 @@ ToString(ReadStatement)
     ostringstream out;
     out << "read ";
     if (listExpression != 0)
-	out << ListToString(listExpression, ",", false);
+      out << ListToString(listExpression, ",", false);
     return out.str();
 }
 
@@ -556,7 +603,7 @@ ToString(PrintStatement)
     ostringstream out;
     out << "print ";
     if (listExpression != 0)
-	out << ListToString(listExpression, ",", false);
+      out << ListToString(listExpression, ",", false);
     out << ";";
     return out.str();
 }
@@ -564,14 +611,13 @@ ToString(PrintStatement)
 ToString(IfStatement)
 {
     ostringstream out;
+    out << "if (" << condition->ToString() << ")" << endl;
+    out << statementTrue->ToString() << endl;
 
-	out << "if (" << condition->ToString() << ")" << endl;
-	out << statementTrue->ToString() << endl;
-
-	if (statementFalse != 0) {
-		out << "else" << endl;
-		out << statementFalse->ToString() << endl;
-	}
+    if (statementFalse != 0) {
+		  out << "else" << endl;
+		  out << statementFalse->ToString() << endl;
+    }
 
     return out.str();
 }
@@ -579,8 +625,8 @@ ToString(IfStatement)
 ToString(WhileStatement)
 {
     ostringstream out;
-	out << "while (" << condition->ToString() << ")" << endl;
-	out << "{" << statementTrue->ToString() << endl << "}";
+    out << "while (" << condition->ToString() << ")" << endl;
+    out << "{" << statementTrue->ToString() << endl << "}";
     return out.str();
 }
 
@@ -588,7 +634,7 @@ ToString(ForStatement)
 {
     ostringstream out;
     out << "for(";
-    out << firstListAssign->ToString() << ";" << condition->ToString() << ";" << lasttListAssign->ToString() <<")";
+    out << firstListAssign->ToString() << ";" << condition->ToString() << ";" << lastListAssign->ToString() <<")";
     out << statementTrue->ToString();
 
     return out.str();
@@ -596,10 +642,10 @@ ToString(ForStatement)
 
 ToString(AssignStatement)
 {
-   ostringstream out;
-	out << "// Linea " << first_line << " Columna " << first_column << "\n"; 
-	out << leftValue->ToString() << " = " << value->ToString() << ";";
-   return out.str();
+    ostringstream out;
+    out << "// Linea " << first_line << " Columna " << first_column << "\n"; 
+    out << leftValue->ToString() << " = " << value->ToString() << ";";
+    return out.str();
 }
 
 ToString(MethodCallStatement)
@@ -626,12 +672,12 @@ ToString(BlockStatement)
 {
     ostringstream out;
 
-	out << "{" << endl;
+    out << "{" << endl;
 
-	if (listStatements != 0)
-		out << ListToString(listStatements, "\n", true);
+    if (listStatements != 0)
+		  out << ListToString(listStatements, "\n", true);
 
-	out << "}";
+    out << "}";
 
     return out.str();
 }
@@ -649,16 +695,18 @@ ToString(ClassDef)
 /*************Validar Semantica ***************/
 
 /* Validar semantica Expresiones */
+ValidarSemantica(ClassDef){return new NewExpression();}
+
 ValidarSemantica(AddExpression)
 {
-    NewExpression *first = FirstExpression->ValidarSemantica();
-    NewExpression *second = SecondExpression->ValidarSemantica();
+    NewExpression *first = firstExpression->ValidarSemantica();
+    NewExpression *second = secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) /* validar que sea entero*/)
+        if((first->type == second->type) && first->type == int)
         {
-            return new NewAddExpression(NewFirstExpression,NewSecondExpression);
+            return new NewAddExpression(newfirstExpression,newSecondExpression);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -669,14 +717,14 @@ ValidarSemantica(AddExpression)
 
 ValidarSemantica(SubExpression)
 {
-    NewExpression *first = FirstExpression->ValidarSemantica();
-    NewExpression *second = SecondExpression->ValidarSemantica();
+    NewExpression *first = firstExpression->ValidarSemantica();
+    NewExpression *second = secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) /* validar que sea entero*/)
+        if((first->type == second->type) && first->type == int)
         {
-            return new NewSubExpression(NewFirstExpression,NewSecondExpression);
+            return new NewSubExpression(newfirstExpression,newSecondExpression);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -687,12 +735,12 @@ ValidarSemantica(SubExpression)
 
 ValidarSemantica(MultExpression)
 {
-    NewExpression *first = FirstExpression->ValidarSemantica();
-    NewExpression *second = SecondExpression->ValidarSemantica();
+    NewExpression *first = firstExpression->ValidarSemantica();
+    NewExpression *second = secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) /* validar que sea entero*/)
+        if((first->type == second->type) && first->type == int)
         {
             return new NewMultExpression(first,second);
         }
@@ -705,12 +753,12 @@ ValidarSemantica(MultExpression)
 
 ValidarSemantica(DivExpression)
 {
-    NewExpression *first = FirstExpression->ValidarSemantica();
-    NewExpression *second = SecondExpression->ValidarSemantica();
+    NewExpression *first = firstExpression->ValidarSemantica();
+    NewExpression *second = secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) /* validar que sea entero*/)
+        if((first->type == second->type) && first->type == int)
         {
             return new NewDivExpression(first,second);
         }
@@ -723,12 +771,12 @@ ValidarSemantica(DivExpression)
 
 ValidarSemantica(LessThanExpression)
 {
-    NewExpression *first = FirstExpression->ValidarSemantica();
-    NewExpression *second = SecondExpression->ValidarSemantica();
+    NewExpression *first = firstExpression->ValidarSemantica();
+    NewExpression *second = secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) /* validar que sea entero*/)
+        if((first->type == second->type) && first->type == int)
         {
             return new NewLessThanExpression(first,second);
         }
@@ -741,12 +789,12 @@ ValidarSemantica(LessThanExpression)
 
 ValidarSemantica(BigerThanExpression)
 {
-    NewExpression *first = FirstExpression->ValidarSemantica();
-    NewExpression *second = SecondExpression->ValidarSemantica();
+    NewExpression *first = firstExpression->ValidarSemantica();
+    NewExpression *second = secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) /* validar que sea entero*/)
+        if((first->type == second->type) && first->type == int)
         {
             return new NewBigerThanExpression(first,second);
         }
@@ -759,12 +807,12 @@ ValidarSemantica(BigerThanExpression)
 
 ValidarSemantica(LessThanEqualExpression)
 {
-    NewExpression *first = FirstExpression->ValidarSemantica();
-    NewExpression *second = SecondExpression->ValidarSemantica();
+    NewExpression *first = firstExpression->ValidarSemantica();
+    NewExpression *second = secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) /* validar que sea entero*/)
+        if((first->type == second->type) && first->type == int)
         {
             return new NewLessThanEqualExpression(first,second);
         }
@@ -777,12 +825,12 @@ ValidarSemantica(LessThanEqualExpression)
 
 ValidarSemantica(BigerThanEqualExpression)
 {
-    NewExpression *first = FirstExpression->ValidarSemantica();
-    NewExpression *second = SecondExpression->ValidarSemantica();
+    NewExpression *first = firstExpression->ValidarSemantica();
+    NewExpression *second = secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) /* validar que sea entero*/)
+        if((first->type == second->type) && first->type == int)
         {
             return new NewBigerThanEqualExpression(first,second);
         }
@@ -795,12 +843,12 @@ ValidarSemantica(BigerThanEqualExpression)
 
 ValidarSemantica(EqualExpression)
 {
-    NewExpression *first = FirstExpression->ValidarSemantica();
-    NewExpression *second = SecondExpression->ValidarSemantica();
+    NewExpression *first = firstExpression->ValidarSemantica();
+    NewExpression *second = secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) /* validar que sea entero*/)
+        if((first->type == second->type) && first->type == int)
         {
             return new NewEqualExpression(first,second);
         }
@@ -813,12 +861,12 @@ ValidarSemantica(EqualExpression)
 
 ValidarSemantica(NotEqualExpression)
 {
-    NewExpression *first = FirstExpression->ValidarSemantica();
-    NewExpression *second = SecondExpression->ValidarSemantica();
+    NewExpression *first = firstExpression->ValidarSemantica();
+    NewExpression *second = secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) /* validar que sea entero*/)
+        if((first->type == second->type) && first->type == int)
         {
             return new NewNotEqualExpression(first,second);
         }
@@ -831,12 +879,12 @@ ValidarSemantica(NotEqualExpression)
 
 ValidarSemantica(ShiftLeftExpression)
 {
-    NewExpression *first = FirstExpression->ValidarSemantica();
-    NewExpression *second = SecondExpression->ValidarSemantica();
+    NewExpression *first = firstExpression->ValidarSemantica();
+    NewExpression *second = secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) /* validar que sea entero*/)
+        if((first->type == second->type) && first->type == int)
         {
             return new NewShiftLeftExpression(first,second);
         }
@@ -849,12 +897,12 @@ ValidarSemantica(ShiftLeftExpression)
 
 ValidarSemantica(ShiftRightExpression)
 {
-    NewExpression *first = FirstExpression->ValidarSemantica();
-    NewExpression *second = SecondExpression->ValidarSemantica();
+    NewExpression *first = firstExpression->ValidarSemantica();
+    NewExpression *second = secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) /* validar que sea entero*/)
+        if((first->type == second->type) && first->type == int)
         {
             return new NewShiftRightExpression(first,second);
         }
@@ -867,12 +915,12 @@ ValidarSemantica(ShiftRightExpression)
 
 ValidarSemantica(RotExpression)
 {
-    NewExpression *first = FirstExpression->ValidarSemantica();
-    NewExpression *second = SecondExpression->ValidarSemantica();
+    NewExpression *first = firstExpression->ValidarSemantica();
+    NewExpression *second = secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) /* validar que sea entero*/)
+        if((first->type == second->type) && first->type == int)
         {
             return new NewRotExpression(first,second);
         }
@@ -885,12 +933,12 @@ ValidarSemantica(RotExpression)
 
 ValidarSemantica(OrExpression)
 {
-    NewExpression *first = FirstExpression->ValidarSemantica();
-    NewExpression *second = SecondExpression->ValidarSemantica();
+    NewExpression *first = firstExpression->ValidarSemantica();
+    NewExpression *second = secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) /* validar que sea entero*/)
+        if((first->type == second->type) && first->type == int)
         {
             return new NewOrExpression(first,second);
         }
@@ -903,12 +951,12 @@ ValidarSemantica(OrExpression)
 
 ValidarSemantica(AndExpression)
 {
-    NewExpression *first = FirstExpression->ValidarSemantica();
-    NewExpression *second = SecondExpression->ValidarSemantica();
+    NewExpression *first = firstExpression->ValidarSemantica();
+    NewExpression *second = secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) /* validar que sea entero*/)
+        if((first->type == second->type) && first->type == int)
         {
             return new NewAndExpression(first,second);
         }
@@ -921,12 +969,12 @@ ValidarSemantica(AndExpression)
 
 ValidarSemantica(ModExpression)
 {
-    NewExpression *first = FirstExpression->ValidarSemantica();
-    NewExpression *second = SecondExpression->ValidarSemantica();
+    NewExpression *first = firstExpression->ValidarSemantica();
+    NewExpression *second = secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) /* validar que sea entero*/)
+        if((first->type == second->type) && first->type == int)
         {
             return new NewModExpression(first,second);
         }
@@ -939,11 +987,11 @@ ValidarSemantica(ModExpression)
 
 ValidarSemantica(NotExpression)
 {
-    NewExpression *first = NewFirstExpression->ValidarSemantica();
+    NewExpression *first = firstExpression->ValidarSemantica();
     
     if(first != NULL )
     {
-        if(/* validar que sea boleano*/)
+        if(first->type == boolean)
         {
             return new NewRotExpression(first);
         }
@@ -954,6 +1002,20 @@ ValidarSemantica(NotExpression)
     return NULL;
 }
 
+ValidarSemantica(ParameterDef){return new NewExpression();}
+
+ValidarSemantica(MethodCallExpression){return new NewExpression();}
+
+ValidarSemantica(LValueExpression){return new NewExpression();}
+
+ValidarSemantica(ConstantIntExpression){return new NewExpression();}
+
+ValidarSemantica(ConstantCharExpression){return new NewExpression();}
+
+ValidarSemantica(ConstantStringExpression){return new NewExpression();}
+
+ValidarSemantica(ConstantBoolExpression){return new NewExpression();}
+
 /* Validar semantica Statements */
 
 ValidarSemantica(IfStatement)
@@ -961,7 +1023,7 @@ ValidarSemantica(IfStatement)
     NewExpression *newCondition = condition->ValidarSemantica();
     if(newCondition == NULL)
         return NULL;
-    if(/*validar tipo*/)
+    if(newCondition->type == boolean)
     {
         ErrorSemantico("Error: Condicion if debe se bool");
         return NULL;
@@ -984,7 +1046,7 @@ ValidarSemantica(WhileStatement)
     NewStatement *newCondition = condition->ValidarSemantica();
     if(newCondition == NULL)
         return NULL;
-    if(/*vaidar tipo*/)
+    if(newCondition->type == boolean)
     {
         ErrorSemantico("Error: Condicion if debe se bool");
         return NULL;                       
@@ -996,7 +1058,650 @@ ValidarSemantica(WhileStatement)
 
     return new NewWhileStatement(newCondition,newStatementTrue);
 }
+
 ValidarSemantica(ForStatement)
+{
+    NewStatement *newFirstListAssign = firstListAssign->ValidarSemantica();
+    if(newFirstListAssign == NULL)
+        return NULL;
+
+    NewExpression *newCondition = condition->ValidarSemantica();
+    if(newCondition == NULL)
+        return NULL;
+
+    if(newCondition->type != bool)
+        return NULL;
+
+    NewStatement *newLastListAssign = lastListAssign->ValidarSemantica();
+    if(newLastListAssign == NULL)
+        return NULL;
+
+    NewStatement *newStatementTrue = statementTrue->ValidarSemantica();
+    if(newStatementTrue == NULL)
+        return NULL;
+
+    return new NewForStatement(newFirstListAssign,newCondition,newLastListAssign,newStatementTrue);
+}
+
+ValidarSemantica(ReturnStatement)
+{
+    NewExpression *newReturnExpression = returnExpression->ValidarSemantica();
+    if(newReturnExpression != NULL)
+        return NULL;
+
+    return new NewReturnExpression(newReturnExpression);
+}
+
+ValidarSemantica(BlockStatement)
+{
+    list<NewStatement*> *newListStatement = new list<NewStatement*>();
+    if(listStatements == NULL)
+        return NULL
+
+    list<NewStatement>::iterator it = listStatements->begin();
+    while(it != listStatements->end()) {
+        Statement *stmTemp = *it;
+        NewStatement *newStm ;
+        if(dynamic_cast<BlockStatement*>(stmTemp)!= NULL)
+        {
+          currentContexto += 1; 
+          newStm = stmTemp->ValidarSemantica();
+          currentContexto -= 1;
+        }
+        else
+        {
+          newStm = stmTemp->ValidarSemantica();
+        }
+        if(newStm == NULL)
+            return NULL;
+        newListStatement.push_back(newStm);
+        it++;
+    }
+    return new NewBlockStatement(newListStatement);
+}
+
+ValidarSemantica(ReadStatement)
+{
+    list<NewExpression*> newListExpression = new list<NewExpression*>();
+    if(listExpression == NULL)
+        return NULL;
+
+    list<NewExpression>::iterator it = listExpression->begin();
+    while(it != listExpression->end()) {
+        Expresion *exprTemp = *it;
+        NewExpression *newExpr = exprTemp->ValidarSemantica();
+        if(newExpr == NULL)
+            return NULL;
+        newListExpression.push_back(newExpr);
+        it++;
+    }
+    return new NewReadStatement(newListExpression);
+}
+
+ValidarSemantica(PrintStatement)
+{
+    list<NewExpression*> newListExpression = new list<NewExpression*>();
+    if(listExpression == NULL)
+        return NULL;
+
+    list<NewExpression>::iterator it = listExpression->begin();
+    while(it != listExpression->end()) {
+        Expresion *exprTemp = *it;
+        NewExpression *newExpr = exprTemp->ValidarSemantica();
+        if(newExpr == NULL)
+            return NULL;
+        newListExpression.push_back(newExpr);
+        it++;
+    }
+    return new NewPrintStatement(newListExpression);
+}
+
+ValidarSemantica(AssignStatement)
+{
+    NewExpression *newLeftValue = leftValue->ValidarSemantica();
+    if(newLeftValue == NULL)
+        return NULL;
+
+    NewExpression *newValue = value->ValidarSemantica();
+    if(newValue == NULL)
+        return NULL;
+
+    return new NewAssignStatement(newLeftValue,newValue);
+}
+
+ValidarSemantica(MethodCallStatement)
+{
+  if(methodDeclared[name]!= NULL)
+  {
+    string str = "Metodo no declarado";
+    ErrorSemantico(str);
+    return NULL;
+  }
+
+  list<NewExpression*>newListExpression;
+
+  list<Expresion*>::iterator it;
+  it = parameters->begin();
+  while(it != parameters->end()) {
+    NewExpression * newExpr = (*it)->ValidarSemantica();
+    if(newExpr == NULL)
+    {
+      string str = "Error";
+      ErrorSemantico(str);
+      return NULL;
+    }
+    newListExpression.push_back(newExpr);  
+  }
+
+  return new NewBlockStatement(id,newListExpression);
+}
+
+ValidarSemantica(MethodDef)
+{
+  Contexto *contestoActual = contextos[currentContexto];
+  currentContexto += 1;
+
+  Contexto *contextoNuevo = new Contexto();
+  contextoNuevo->currentLevel = 0;
+  contextoNuevo->currentOffset = 1;
+
+  list<ParameterDef *>::iterator it;
+  it = parameters->begin();
+  while(it != parameters->end())
+  {
+    string str = (*it)->id;
+    Variable *var = new Variable(currentOffset,currentLevel,NULL,false,0,(*it)->parameterType);
+    if(contextoNuevo->contextoMap[str] != NULL){
+      string str = "Parametros repetidos";
+      ErrorSemantico(str);
+      return NULL;
+    }else{
+      contextoNuevo->contextoMap[str] = var;
+      contextoNuevo->currentOffset += 1;
+    }
+  }
+  contextos[currentContexto] = contextoNuevo;
+  contextoNuevo->contextoAnterior = contestoActual;
+
+  NewBlockStatement *newBlockStatement = block->ValidarSemantica();
+  if(methodDeclared[id] != NULL)
+  {
+    string str = "Metodo ya definido";
+    ErrorSemantico(str);
+    return NULL;
+  }
+  Procedimiento *p = new Procedimiento(id,newBlockStatement);
+  methodDeclared[id] = p;
+  return NULL;
+}
+
+ValidarSemantica(VariableDef)
+{
+
+    if(contextos[currentContexto].contextoMap[id] != NULL){
+      string error = "Variable ya definida";
+      ErrorSemantico(error);
+      return NULL;
+    }
+    contextos[currentContexto].currentOffset+=1;
+    Variable *newVariable;
+    if(isArrayDef)
+        newVariable = new Variable(currentOffset,level,NULL,isArrayDef,array_dimension,variable_type);
+    else
+    {
+        NewExpression * expr = initial_value->ValidarSemantica();
+        newVariable = new Variable(currentOffset,currentLevel,expr,isArrayDef,0,variable_type);
+    }
+    contextos[currentContexto].contextoMap[id] = newVariable;
+    return NULL;
+}
+
+ValidarSemantica(BreakStatement)
+{
+    return new NewBreakStatement();
+}
+
+ValidarSemantica(ContinueStatement)
+{
+    return new NewContinueStatement();
+}
+
+/**************Generacion de Codigo Expresiones **************/
+
+GenerarCodigo(NewClassDef)
+{
+  ostringstream nuevo << "main :";
+
+}
+
+GenerarCodigo(NewAddExpression)
+{
+    string L = newfirstExpression->GenerarCodigo();
+    string R = newSecondExpression->GenerarCodigo();
+
+    ostringstream nuevo << L << R;
+    FreeRegister(newfirstExpression->place);
+    FreeRegister(newSecondExpression->place);
+    string registro = getFreeRegister();
+    nuevo << "add " << registro <<","<<newfirstExpression->place<<","<<newSecondExpression->place;
+    place = registro;
+
+    return nuevo.str();
+}
+
+GenerarCodigo(NewSubExpression)
+{
+    string L = newfirstExpression->GenerarCodigo();
+    string R = newSecondExpression->GenerarCodigo();
+
+    ostringstream nuevo << L << R;
+    FreeRegister(newfirstExpression->place);
+    FreeRegister(newSecondExpression->place);
+    string registro = getFreeRegister();
+    nuevo << "sub "<< registro <<","<<newfirstExpression->place<<","<<newSecondExpression->place;
+    place = registro;
+
+    return nuevo.str();
+}
+
+GenerarCodigo(NewMultExpression) 
+{
+    string L = newfirstExpression->GenerarCodigo();
+    string R = newSecondExpression->GenerarCodigo();
+
+    ostringstream nuevo << L << R;
+    FreeRegister(newfirstExpression->place);
+    FreeRegister(newSecondExpression->place);
+    nuevo << "mult "<< newfirstExpression->place<<","<<newSecondExpression->place;
+    place = newfirstExpression->place;
+
+    return nuevo.str();
+}
+
+GenerarCodigo(NewDivExpression)
+{
+    string L = newfirstExpression->GenerarCodigo();
+    string R = newSecondExpression->GenerarCodigo();
+
+    ostringstream nuevo << L << R;
+    FreeRegister(newfirstExpression->place);
+    FreeRegister(newSecondExpression->place);
+    nuevo << "div "<< newfirstExpression->place<<","<<newSecondExpression->place;
+    place = newfirstExpression->place;
+
+    return nuevo.str();
+}
+
+GenerarCodigo(NewLessThanExpression)
+{
+    string L = newfirstExpression->GenerarCodigo();
+    string R = newSecondExpression->GenerarCodigo();
+
+    ostringstream nuevo << L << R;
+    FreeRegister(newfirstExpression->place);
+    FreeRegister(newSecondExpression->place);
+    string label = stackCurrentLabel.pop_back();    
+    nuevo << "blt "<< newfirstExpression->place<<","<<newSecondExpression->place <<","<< label;
+
+    place = "";
+
+    return nuevo.str();   
+}
+
+GenerarCodigo(NewLessThanEqualExpression)
+{
+    string L = newfirstExpression->GenerarCodigo();
+    string R = newSecondExpression->GenerarCodigo();
+
+    ostringstream nuevo << L << R;
+    FreeRegister(newfirstExpression->place);
+    FreeRegister(newSecondExpression->place);
+    string label = stackCurrentLabel.pop_back();
+    nuevo << "ble "<< newfirstExpression->place<<","<<newSecondExpression->place <<","<< label;
+    place = "";
+
+    return nuevo.str();   
+}
+
+GenerarCodigo(NewBigerThanExpression)
+{
+    string L = newfirstExpression->GenerarCodigo();
+    string R = newSecondExpression->GenerarCodigo();
+
+    ostringstream nuevo << L << R;
+    FreeRegister(newfirstExpression->place);
+    FreeRegister(newSecondExpression->place);
+    string label = stackCurrentLabel.pop_back();
+    nuevo << "bgt "<< newfirstExpression->place<<","<<newSecondExpression->place <<","<< label;
+    place = "";
+
+    return nuevo.str();   
+}
+
+GenerarCodigo(NewBigerThanEqualExpression)
+{
+    string L = newfirstExpression->GenerarCodigo();
+    string R = newSecondExpression->GenerarCodigo();
+
+    ostringstream nuevo << L << R;
+    FreeRegister(newfirstExpression->place);
+    FreeRegister(newSecondExpression->place);
+    string label = stackCurrentLabel.pop_back();
+    nuevo << "bge "<< newfirstExpression->place<<","<<newSecondExpression->place <<","<< label;
+    place = "";
+
+    return nuevo.str();   
+}
+
+GenerarCodigo(NewEqualExpression)
+{
+    string L = newfirstExpression->GenerarCodigo();
+    string R = newSecondExpression->GenerarCodigo();
+
+    ostringstream nuevo << L << R;
+    FreeRegister(newfirstExpression->place);
+    FreeRegister(newSecondExpression->place);
+    string label = stackCurrentLabel.pop_back();
+    nuevo << "beq "<< newfirstExpression->place<<","<<newSecondExpression->place <<","<< label;
+    place = "";
+
+    return nuevo.str();  
+}
+
+GenerarCodigo(NewNotEqualExpression)
+{
+    string L = newfirstExpression->GenerarCodigo();
+    string R = newSecondExpression->GenerarCodigo();
+
+    ostringstream nuevo << L << R;
+    FreeRegister(newfirstExpression->place);
+    FreeRegister(newSecondExpression->place);
+    string label = stackCurrentLabel.pop_back();
+    nuevo << "bne "<< newfirstExpression->place<<","<<newSecondExpression->place<<","<<label;
+    place = "";
+
+    return nuevo.str();
+}
+
+GenerarCodigo(NewShiftRightExpression)
+{
+    string L = newfirstExpression->GenerarCodigo();
+    string R = newSecondExpression->GenerarCodigo();
+
+    ostringstream nuevo << L << R;
+    FreeRegister(newfirstExpression->place);
+    FreeRegister(newSecondExpression->place);
+    string registro = getFreeRegister();
+    nuevo << "srl "<< registro << newfirstExpression->place<<","<<newSecondExpression->place;
+    place = registro;
+
+    return nuevo.str();
+}
+
+GenerarCodigo(NewShiftLeftExpression)
+{
+    string L = newfirstExpression->GenerarCodigo();
+    string R = newSecondExpression->GenerarCodigo();
+
+    ostringstream nuevo << L << R;
+    FreeRegister(newfirstExpression->place);
+    FreeRegister(newSecondExpression->place);
+    string registro = getFreeRegister();
+    nuevo << "sll "<< registro << newfirstExpression->place<<","<<newSecondExpression->place;
+    place = registro;
+
+    return nuevo.str();
+}
+
+GenerarCodigo(NewRotExpression)
+{
+    string L = newfirstExpression->GenerarCodigo();
+    string R = newSecondExpression->GenerarCodigo();
+
+    ostringstream nuevo << L << R;
+    FreeRegister(newfirstExpression->place);
+    FreeRegister(newSecondExpression->place);
+    string registro = getFreeRegister();
+    nuevo << "rot "<< registro << newfirstExpression->place<<","<<newSecondExpression->place;
+    place = registro;
+
+    return nuevo.str();
+}
+
+GenerarCodigo(NewOrExpression)
+{
+    string L = newfirstExpression->GenerarCodigo();
+    string R = newSecondExpression->GenerarCodigo();
+
+    ostringstream nuevo << L << R;
+    FreeRegister(newfirstExpression->place);
+    FreeRegister(newSecondExpression->place);
+    string registro = getFreeRegister();
+    nuevo << "or "<< registro << newfirstExpression->place<<","<<newSecondExpression->place;
+    place = registro;
+
+    return nuevo.str();
+}
+
+GenerarCodigo(NewAndExpression)
+{
+    string L = newfirstExpression->GenerarCodigo();
+    string R = newSecondExpression->GenerarCodigo();
+
+    ostringstream nuevo << L << R;
+    FreeRegister(newfirstExpression->place);
+    FreeRegister(newSecondExpression->place);
+    string registro = getFreeRegister();
+    nuevo << "and "<< registro << newfirstExpression->place<<","<<newSecondExpression->place;
+    place = registro;
+
+    return nuevo.str()
+}
+
+//Pendiente
+GenerarCodigo(NewNotExpression)
+{
+    string L = newfirstExpression->GenerarCodigo();
+    string R = newSecondExpression->GenerarCodigo();
+
+    ostringstream nuevo << L << R;
+    FreeRegister(newfirstExpression->place);
+    FreeRegister(newSecondExpression->place);
+    string registro = getFreeRegister();
+    nuevo << " "<< registro << newfirstExpression->place<<","<<newSecondExpression->place;
+    place = registro;
+
+    return nuevo.str();
+}
+
+//Pendiente
+GenerarCodigo(NewModExpression)
+{
+    string L = newfirstExpression->GenerarCodigo();
+    string R = newSecondExpression->GenerarCodigo();
+
+    string nuevo << L << R;
+    FreeRegister(newfirstExpression->place);
+    FreeRegister(newSecondExpression->place);
+    string registro = getFreeRegister();
+    nuevo << " "<< registro << newfirstExpression->place<<","<<newSecondExpression->place;
+    place = registro;
+
+    return nuevo.str();
+}
+
+/************** Generacion de Codigo Sentencias **************/
+
+GenerarCodigo(NewIfStatement)
+{
+    string labelIf = getLabel("if");
+    string labelElse = getLabel("else");
+    string labelEndIf = getLabel("endIf");
+    
+    //no estoy seguro de dejar esto
+    stackIfLabel.push_back(labelIf);
+    stackElseLabel.push_back(labelElse);
+    stackEndIfLabel.push_back(labelEndIf);
+
+    //no se si lo de arriba o esto
+    stackCurrentLabel.push_back(labelIf);
+
+    string condition = newCondition->GenerarCodigo();
+    ostringstream nuevo << condition;
+    
+    if(newStatementFalse != null)
+        nuevo << "j " << labelElse;
+    else
+        nuevo << "j " << labelEndIf;
+
+    nuevo << labelIf << " :";
+    nuevo << newStatementTrue->GenerarCodigo();
+
+    if(newStatementFalse << NULL)
+    {
+        nuevo << labelElse << " :";
+        nuevo << newStatementFalse->GenerarCodigo();
+    }
+
+    nuevo << labelEndIf << " :";
+    return nuevo.str();
+}
+
+GenerarCodigo(NewWhileStatement)
+{
+    string labelStartWhile = getLabel("startWhile");
+    string labelWhile = getLabel("while");
+    string labelEndWhile = getLabel("endWhile");
+
+    stackCurrentLabel.push_back(labelWhile);
+    string condition = newCondition->GenerarCodigo();
+    
+    ostringstream nuevo << labelStartWhile << " :";
+    nuevo << condition;
+    nuevo << "j " << labelEndWhile;
+
+    nuevo << labelWhile << " :";
+    nuevo << newStatementTrue->GenerarCodigo();
+    nuevo << "j " << labelStartWhile; 
+
+    nuevo << labelEndWhile << " :";
+    return nuevo.str();
+}
+
+GenerarCodigo(NewForStatement)
+{
+    string labelStartFor = getLabel("startFor");
+    string labelfor = getLabel("for");
+    string labelEndfor = getLabel("endfor");
+
+    stackCurrentLabel.push_back(labelfor);
+
+    string firstListAssign = newFirstListAssign->GenerarCodigo();
+    string lastListAssign = newLastListAssign->GenerarCodigo();
+
+    ostringstream nuevo << firstListAssign;
+    nuevo << lastListAssign;
+    string condition = newCondition->GenerarCodigo();
+
+    nuevo << labelStartFor << " :";
+    nuevo << condition;
+    nuevo << "j " << labelEndfor;
+
+    nuevo << labelfor << " :";
+    nuevo << newStatementTrue->GenerarCodigo();
+    nuevo << "j " << labelStartFor; 
+
+    nuevo << labelEndfor << " :";
+    return nuevo.str();
+}
+
+GenerarCodigo(NewAssignStatement)
 {
 
 }
+
+GenerarCodigo(NewMethodCallStatement)
+{
+    ostringstream nuevo ;
+    list<NewExpression *>::iterator it;
+    it = newParameters->begin();
+    int parameterCount = newParameters->size();
+    nuevo << "addi " << "$sp" << (-1 * parameterCount);
+    int parameterPosition = 0;
+    while(it != newParameters->end())
+    {   
+        nuevo << (*it)->GenerarCodigo();
+        nuevo << "sw " << "("<< (parameterPosition * 4)<<")$sp"<< "," ;
+    }
+
+    nuevo << "jal " + id;
+    return nuevo.str();
+}
+
+GenerarCodigo(NewReturnStatement)
+{
+    string nuevo = newReturnExpression->GenerarCodigo();
+    nuevo += "move "+ "$v0" +" , "+ newReturnExpression->place; 
+    nuevo += "jr " + "$ra";
+}
+
+GenerarCodigo(NewPrintStatement)
+{
+    string nuevo;
+    list<NewExpression *>::iterator it;
+    it = newListExpression->begin();
+    while(it != newListExpression->end())
+    { 
+        NewExpression *expr = (*it)
+        nuevo += expr->GenerarCodigo();
+        if(expr->type == "int")
+        {
+            nuevo += "li " + "$v0" +","+ "1";
+            nuevo += "move " + "$a0" + expr->place;
+            nuevo += "syscall";
+        }
+        else if(expr->type == "string")
+        {
+            nuevo += "li " + "$v0" +","+ "4";
+            nuevo += "move " + "$a0" +","+ expr->place;
+            nuevo += "syscall";
+        }
+    }
+
+    return nuevo;
+}
+
+GenerarCodigo(NewReadStatement)
+{
+    string nuevo;
+    list<NewExpression *>::iterator it;
+    it = newListExpression->begin();
+    while(it != newListExpression->end())
+    { 
+        NewExpression *expr = (*it)
+        nuevo += expr->GenerarCodigo();
+
+    }
+
+    return nuevo;
+}
+
+GenerarCodigo(NewConstantIntExpression){return "falta";}
+
+GenerarCodigo(NewConstantBoolExpression){return "falta";}
+
+GenerarCodigo(NewConstantCharExpression){return "falta";}
+
+GenerarCodigo(NewParameterDef){return "falta";}
+
+GenerarCodigo(NewLValueExpression){return "falta";}
+
+GenerarCodigo(NewMethodCallExpression){return "falta";}
+
+GenerarCodigo(NewBreakStatement){return "falta";}
+
+GenerarCodigo(NewContinueStatement){return "falta";}
+
+GenerarCodigo(NewBlockStatement){return "falta";}
+
+
