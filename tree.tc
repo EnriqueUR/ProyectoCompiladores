@@ -1241,7 +1241,6 @@ ValidarSemantica(MethodCallStatement)
 
 ValidarSemantica(MethodDef)
 {
-    cout<<"metodo"<<endl;
   Contexto *contestoActual = contextos[currentContexto];
   currentContexto += 1;
 
@@ -1250,25 +1249,25 @@ ValidarSemantica(MethodDef)
   contextoNuevo->currentOffset = 1;
 
   list<ParameterDef *>::iterator it;
-  it = parameters->begin();
-  while(it != parameters->end())
-  {
-    cout<<"parametro"<<endl;
-    NewParameterDef *param = (NewParameterDef*)(*it)->ValidarSemantica();
-    string str = param->newId;
-    Type tipo = param->newParameterType;
-    Variable *var = new Variable(contextoNuevo->currentOffset,contextoNuevo->currentLevel,0,false,0,tipo);
-    if(contextoNuevo->contextoMap[str] != NULL){
-      string str = "Parametros repetidos";
-      ErrorSemantico(str);
-      return NULL;
-    }else{
-      contextoNuevo->contextoMap[str] = var;
-      contextoNuevo->currentOffset += 1;
-    }
-    it++;
+  if(parameters != NULL){
+      it = parameters->begin();
+      while(it != parameters->end())
+      {
+        NewParameterDef *param = (NewParameterDef*)(*it)->ValidarSemantica();
+        string str = param->newId;
+        Type tipo = param->newParameterType;
+        Variable *var = new Variable(contextoNuevo->currentOffset,contextoNuevo->currentLevel,0,false,0,tipo);
+        if(contextoNuevo->contextoMap[str] != NULL){
+          string str = "Parametros repetidos";
+          ErrorSemantico(str);
+          return NULL;
+        }else{
+          contextoNuevo->contextoMap[str] = var;
+          contextoNuevo->currentOffset += 1;
+        }
+        it++;
+      }
   }
-  cout<<"fin funcion"<<endl;
   contextos[currentContexto] = contextoNuevo;
   contextoNuevo->contextoAnterior = contestoActual;
   //NewBlockStatement *newBlockStatement = (NewBlockStatement*)block->ValidarSemantica();
@@ -1327,14 +1326,14 @@ ValidarSemantica(ContinueStatement)
 GenerarCodigo(NewClassDef)
 {
   ostringstream nuevo;
-  nuevo << "main :";
+  nuevo << "main : \n";
   map<string,Procedimiento *>::iterator it;
   it = methodDeclared.begin();
   while(it != methodDeclared.end())
   {
     Procedimiento *p = it->second;
-    nuevo<<p->id <<" :";
-    nuevo<<"codigo";
+    nuevo<<it->first <<" : \n";
+    nuevo<<"codigo \n";
     it++;
   }
   
