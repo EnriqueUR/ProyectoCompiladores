@@ -2,7 +2,8 @@
 #include <cstdio>
 #include <iostream>
 #include <fstream>
-#include "ClassDef.h"
+#include "tree.h"
+
 
 extern ifstream in;
 extern int current_line;
@@ -14,6 +15,7 @@ using namespace std;
 int yyparse();
 
 ClassDef *class_def;
+NewClassDef *newClassDef;
 
 int main(int argc, char *argv[])
 {
@@ -32,11 +34,13 @@ int main(int argc, char *argv[])
 	}
 
 	class_def = 0;
+	newClassDef = 0;
 	yyparse();
 
 	if (errors == 0) {
         if(class_def != 0)
-           cout << class_def->ToString() << endl;
+           newClassDef = (NewClassDef*)class_def->ValidarSemantica();
+      
 	}
 
 	return 0;

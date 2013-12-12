@@ -18,6 +18,8 @@
   class LValueExpression;
   class NewStatement;
   class NewExpression;
+  class ClassDef;
+  class NewClassDef;
 
   void AddStatement(BlockStatement *block,Statement *stm);
   typedef list<Statement *> StatementList;
@@ -33,12 +35,6 @@
 
   typedef list<NewStatement *> NewStatementList;
   typedef list<NewExpression *> NewExpressionList;
-
-  
- 
-
- 
-
 
 %}
 
@@ -81,7 +77,7 @@ Contexto *contextos[10];
 %operation %virtual TheNewClass *ValidarSemantica(TheClass *this)
 
 
-%node ClassDef TheClass %typedef = {
+%node ClassDef TheClass = {
     string className;
     VariableDefList *listVariable;
     MethodDefList *listMethod;   
@@ -264,6 +260,9 @@ Contexto *contextos[10];
 %node NewConstantIntExpression NewConstantExpression = {
     int Newconstant;
 }
+%node NewConstantStringExpression NewConstantExpression = {
+    string Newconstant;
+}
 
 %node NewConstantBoolExpression NewConstantExpression = {
     bool Newconstant;
@@ -283,13 +282,16 @@ Contexto *contextos[10];
 }
 
 %node NewParameterDef NewExpression = {
-    string NewId;
+    string newId;
     Type newParameterType;
 }
 
 %node NewLValueExpression NewExpression = {
     string newId;
     %nocreate NewExpression *newExpr;
+
+    int offset;
+    int level;
 }
 
 %node NewMethodCallExpression NewExpression = {
@@ -336,6 +338,7 @@ Contexto *contextos[10];
     NewStatement *newLastListAssign;
     NewStatement *newStatementTrue;  
 }
+
 
 %node NewAssignStatement NewStatement = {
     NewExpression *newLeftValue;
@@ -972,19 +975,64 @@ ValidarSemantica(NotExpression)
     return NULL;
 }
 
-ValidarSemantica(ParameterDef){return NULL;}
+ValidarSemantica(ParameterDef)
+{
+    return NULL;
+}
 
-ValidarSemantica(MethodCallExpression){return NULL;}
+ValidarSemantica(MethodCallExpression)
+{
+    list<NewExpression*> *newListExpression = new list<NewExpression*>();
+    list<Expression*>::iterator it;
+    it = parameters->begin();
+    while(it != parameters->end())
+    {
+        NewExpression * newExpr = (NewExpression*)(*it)->ValidarSemantica();
+        newListExpression->push_back(newExpr);
+    }
+    return new NewMethodCallExpression(id,newListExpression);
+}
 
-ValidarSemantica(LValueExpression){return NULL;}
+ValidarSemantica(LValueExpression)
+{
+    NewExpression *newExpr = (NewExpression*)expr->ValidarSemantica();
+    if(newExpr == NULL)
+    {
+        string msj = "Error en valor asignado";
+        ErrorSemantico(msj);
+        return NULL;
+    } 
+    else
+    {
+        if(newExpr->type != Int && newExpr->type != Boolean)
+        {
+            string msj = "Valor no asignable";
+            ErrorSemantico(msj);
+            return  NULL;
+        }
+    }
+    return  NULL;
+}
 
-ValidarSemantica(ConstantIntExpression){return NULL;}
+ValidarSemantica(ConstantIntExpression)
+{
+    return new NewConstantIntExpression(constant);
+}
 
-ValidarSemantica(ConstantCharExpression){return NULL;}
+ValidarSemantica(ConstantCharExpression)
+{
+    return new NewConstantCharExpression(constant);
+}
 
-ValidarSemantica(ConstantStringExpression){return NULL;}
+ValidarSemantica(ConstantStringExpression)
+{
+    return new NewConstantStringExpression(constant);
+}
 
-ValidarSemantica(ConstantBoolExpression){return NULL;}
+ValidarSemantica(ConstantBoolExpression)
+{
+    return new NewConstantBoolExpression(constant);
+}
 
 /* Validar semantica Statements */
 
@@ -1031,22 +1079,22 @@ ValidarSemantica(WhileStatement)
 
 ValidarSemantica(ForStatement)
 {
-    NewStatement *newFirstListAssign = firstListAssign->ValidarSemantica();
+    NewStatement *newFirstListAssign = (NewStatement*)firstListAssign->ValidarSemantica();
     if(newFirstListAssign == NULL)
         return NULL;
 
-    NewExpression *newCondition = condition->ValidarSemantica();
+    NewExpression *newCondition = (NewExpression*)condition->ValidarSemantica();
     if(newCondition == NULL)
         return NULL;
 
     if(newCondition->type != Boolean)
         return NULL;
 
-    NewStatement *newLastListAssign = lastListAssign->ValidarSemantica();
+    NewStatement *newLastListAssign = (NewStatement*)lastListAssign->ValidarSemantica();
     if(newLastListAssign == NULL)
         return NULL;
 
-    NewStatement *newStatementTrue = statementTrue->ValidarSemantica();
+    NewStatement *newStatementTrue = (NewStatement*)statementTrue->ValidarSemantica();
     if(newStatementTrue == NULL)
         return NULL;
 
@@ -1182,8 +1230,10 @@ ValidarSemantica(MethodDef)
   it = parameters->begin();
   while(it != parameters->end())
   {
-    string str = (*it)->id;
-    Variable *var = new Variable(contextoNuevo->currentOffset,contextoNuevo->currentLevel,0,false,0,(*it)->parameterType);
+    NewParameterDef *param = (NewParameterDef*)(*it)->ValidarSemantica();
+    string str = param->newId;
+    Type tipo = param->newParameterType;
+    Variable *var = new Variable(contextoNuevo->currentOffset,contextoNuevo->currentLevel,0,false,0,tipo);
     if(contextoNuevo->contextoMap[str] != NULL){
       string str = "Parametros repetidos";
       ErrorSemantico(str);
@@ -1249,9 +1299,18 @@ GenerarCodigo(NewClassDef)
 {
   ostringstream nuevo;
   nuevo << "main :";
-  nuevo << newBlockStatement->GenerarCodigo();
-  return nuevo.str();
+  //map<string,Procedimiento *>::iterator it;
+  //it = methodDeclared->begin();
+  //while(it != methodDeclared->end())
+  //{
+   // Procedimiento *p = (*it);
+    //nuevo<<p->id <<" :";
+    //nuevo<<"codigo";
+  //}
+  
 
+
+  return nuevo.str();   
 }
 
 GenerarCodigo(NewAddExpression)
@@ -1686,6 +1745,8 @@ GenerarCodigo(NewConstantIntExpression){return "falta";}
 
 GenerarCodigo(NewConstantBoolExpression){return "falta";}
 
+GenerarCodigo(NewConstantStringExpression){return "falta";}
+
 GenerarCodigo(NewConstantCharExpression){return "falta";}
 
 GenerarCodigo(NewParameterDef){return "falta";}
@@ -1699,5 +1760,3 @@ GenerarCodigo(NewBreakStatement){return "falta";}
 GenerarCodigo(NewContinueStatement){return "falta";}
 
 GenerarCodigo(NewBlockStatement){return "falta";}
-
-
