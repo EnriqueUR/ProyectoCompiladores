@@ -667,8 +667,28 @@ ToString(ClassDef)
 }
 /*************Validar Semantica ***************/
 
-/* Validar semantica Expresiones */
-ValidarSemantica(ClassDef){return NULL;}
+/* Validar semantica Expresiones */  
+ValidarSemantica(ClassDef)
+{
+    contextos[0] = new Contexto();
+    list<VariableDef*>::iterator it1;
+    it1 = listVariable->begin();
+    while(it1 != listVariable->end())
+    {
+        (*it1)->ValidarSemantica();
+        it1++;
+    }
+
+    list<MethodDef*>::iterator it2;
+    it2 = listMethod->begin();
+    while(it2 != listMethod->end())
+    {
+        (*it2)->ValidarSemantica();
+        it2++;
+    }
+    
+    return new NewClassDef(className,NULL);
+}
 
 ValidarSemantica(AddExpression)
 {
@@ -977,7 +997,7 @@ ValidarSemantica(NotExpression)
 
 ValidarSemantica(ParameterDef)
 {
-    return NULL;
+    return new NewParameterDef(id,parameterType);
 }
 
 ValidarSemantica(MethodCallExpression)
@@ -989,6 +1009,7 @@ ValidarSemantica(MethodCallExpression)
     {
         NewExpression * newExpr = (NewExpression*)(*it)->ValidarSemantica();
         newListExpression->push_back(newExpr);
+        it++;
     }
     return new NewMethodCallExpression(id,newListExpression);
 }
@@ -1211,7 +1232,8 @@ ValidarSemantica(MethodCallStatement)
       ErrorSemantico(str);
       return NULL;
     }
-    newListExpression->push_back(newExpr);  
+    newListExpression->push_back(newExpr);
+    it++;  
   }
 
   return new NewMethodCallStatement(id,newListExpression);
@@ -1219,6 +1241,7 @@ ValidarSemantica(MethodCallStatement)
 
 ValidarSemantica(MethodDef)
 {
+    cout<<"metodo"<<endl;
   Contexto *contestoActual = contextos[currentContexto];
   currentContexto += 1;
 
@@ -1230,6 +1253,7 @@ ValidarSemantica(MethodDef)
   it = parameters->begin();
   while(it != parameters->end())
   {
+    cout<<"parametro"<<endl;
     NewParameterDef *param = (NewParameterDef*)(*it)->ValidarSemantica();
     string str = param->newId;
     Type tipo = param->newParameterType;
@@ -1242,11 +1266,13 @@ ValidarSemantica(MethodDef)
       contextoNuevo->contextoMap[str] = var;
       contextoNuevo->currentOffset += 1;
     }
+    it++;
   }
+  cout<<"fin funcion"<<endl;
   contextos[currentContexto] = contextoNuevo;
   contextoNuevo->contextoAnterior = contestoActual;
-
-  NewBlockStatement *newBlockStatement = (NewBlockStatement*)block->ValidarSemantica();
+  //NewBlockStatement *newBlockStatement = (NewBlockStatement*)block->ValidarSemantica();
+  NewBlockStatement *newBlockStatement = NULL;
   if(methodDeclared[id] != NULL)
   {
     string str = "Metodo ya definido";
@@ -1271,10 +1297,13 @@ ValidarSemantica(VariableDef)
     int level = contextos[currentContexto]->currentLevel;
     Variable *newVariable;
     if(isArrayDef)
+    {
+       // NewExpression* expr = (NewExpression*)initial_value->ValidarSemantica();   
         newVariable = new Variable(offset,level,0,true,array_dimension,variable_type);
+    }
     else
     {
-        NewExpression * expr = (NewExpression*)initial_value->ValidarSemantica();
+       // NewExpression * expr = (NewExpression*)initial_value->ValidarSemantica();
         newVariable = new Variable(offset,level,0,false,0,variable_type);
     }
     contextos[currentContexto]->contextoMap[id] = newVariable;
@@ -1299,14 +1328,15 @@ GenerarCodigo(NewClassDef)
 {
   ostringstream nuevo;
   nuevo << "main :";
-  //map<string,Procedimiento *>::iterator it;
-  //it = methodDeclared->begin();
-  //while(it != methodDeclared->end())
-  //{
-   // Procedimiento *p = (*it);
-    //nuevo<<p->id <<" :";
-    //nuevo<<"codigo";
-  //}
+  map<string,Procedimiento *>::iterator it;
+  it = methodDeclared.begin();
+  while(it != methodDeclared.end())
+  {
+    Procedimiento *p = it->second;
+    nuevo<<p->id <<" :";
+    nuevo<<"codigo";
+    it++;
+  }
   
 
 
@@ -1684,6 +1714,7 @@ GenerarCodigo(NewMethodCallStatement)
     {   
         nuevo << (*it)->GenerarCodigo();
         nuevo << "sw " << "("<< (parameterPosition * 4)<<")$sp"<< "," ;
+        it++;
     }
 
     nuevo << "jal " + id;
@@ -1735,6 +1766,7 @@ GenerarCodigo(NewReadStatement)
     { 
         NewExpression *expr = (*it);
         nuevo << expr->GenerarCodigo();
+        it++;
 
     }
 
