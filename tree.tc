@@ -44,11 +44,30 @@ void FreeRegister(string register)
 {
     /* hacer algo */
 } 
+list<string> arrayList;
+
+string getFreeLabel(string label)
+{
+    list<string>::iterator it;
+    it = arrayList.begin();
+    while(it != arrayList.end())
+    {
+        if(label == *it)
+            return "NULL";
+        it++;
+    }
+    return label;
+}
+
 string getFreeRegister(){return " ";}
 
 string getLabel(string label){return "";}
 
 map<string,Procedimiento *> methodDeclared;
+
+int currentContexto = 0; 
+Contexto *contextos[10];
+
 list<string> stackCurrentLabel;
 list<string> listElseLabel;
 list<string> listIfLabel;
@@ -57,9 +76,6 @@ list<string> listWhileLabel;
 list<string> listEndWhileLabel;
 list<string> listForLabel;
 list<string> listEndForLabel;
-
-int currentContexto = 0; 
-Contexto *contextos[10];
 %}
 
 %option lang="C++"
@@ -117,7 +133,7 @@ Contexto *contextos[10];
 
 %node LValueExpression Expression = {
     string id;
-    %nocreate Expression *expr;
+    %nocreate Expression *expr = {NULL};
 }
 
 %node AddExpression BinaryExpression
@@ -147,7 +163,7 @@ Contexto *contextos[10];
     string id;
     int first_line;
     int first_column;
-    %nocreate Expression *initial_value;
+    %nocreate ConstantExpression *initial_value;
     %nocreate bool isArrayDef;
     %nocreate int array_dimension;
     %nocreate Type variable_type;
@@ -288,8 +304,7 @@ Contexto *contextos[10];
 
 %node NewLValueExpression NewExpression = {
     string newId;
-    %nocreate NewExpression *newExpr;
-
+    NewExpression *newExpr;
     int offset;
     int level;
 }
@@ -771,6 +786,7 @@ ValidarSemantica(LessThanExpression)
     {
         if((first->type == second->type) && first->type == Int)
         {
+            
             return new NewLessThanExpression(first,second);
         }
         ErrorSemantico("Error: Tipos Incompatibles");
@@ -1002,12 +1018,14 @@ ValidarSemantica(ParameterDef)
 
 ValidarSemantica(MethodCallExpression)
 {
+    cout<<"entro aqui en MethodCallExpression";
     list<NewExpression*> *newListExpression = new list<NewExpression*>();
     list<Expression*>::iterator it;
     it = parameters->begin();
     while(it != parameters->end())
     {
-        NewExpression * newExpr = (NewExpression*)(*it)->ValidarSemantica();
+        NewExpression * newExpr = (NewExpression*)((*it)->ValidarSemantica());
+        cout<<"entro aqui en los parametros";
         newListExpression->push_back(newExpr);
         it++;
     }
@@ -1016,8 +1034,11 @@ ValidarSemantica(MethodCallExpression)
 
 ValidarSemantica(LValueExpression)
 {
-    NewExpression *newExpr = (NewExpression*)expr->ValidarSemantica();
-    if(newExpr == NULL)
+    NewExpression *newExpr = NULL;
+    if(expr != NULL){
+        newExpr = (NewExpression*)(expr->ValidarSemantica());
+    }
+    if(newExpr == NULL && expr != NULL)
     {
         string msj = "Error en valor asignado";
         ErrorSemantico(msj);
@@ -1025,14 +1046,15 @@ ValidarSemantica(LValueExpression)
     } 
     else
     {
-        if(newExpr->type != Int && newExpr->type != Boolean)
+        if(newExpr!= NULL && newExpr->type != Int && newExpr->type != Boolean)
         {
             string msj = "Valor no asignable";
             ErrorSemantico(msj);
             return  NULL;
         }
     }
-    return  NULL;
+    Contexto *cont = contextos[currentContexto];
+    return new NewLValueExpression(id,newExpr,cont->currentOffset,cont->currentLevel);
 }
 
 ValidarSemantica(ConstantIntExpression)
@@ -1062,7 +1084,7 @@ ValidarSemantica(IfStatement)
     NewExpression *newCondition = (NewExpression*)condition->ValidarSemantica();
     if(newCondition == NULL)
         return NULL;
-    if(newCondition->type == Boolean)
+    if(newCondition->type != Boolean)
     {
         ErrorSemantico("Error: Condicion if debe se bool");
         return NULL;
@@ -1133,8 +1155,9 @@ ValidarSemantica(ReturnStatement)
 ValidarSemantica(BlockStatement)
 {
     list<NewStatement*> *newListStatement = new list<NewStatement*>();
-    if(listStatements == NULL)
+    if(listStatements == NULL){
         return NULL;
+    }
 
     list<Statement*>::iterator it;
     it = listStatements->begin();
@@ -1143,16 +1166,23 @@ ValidarSemantica(BlockStatement)
         NewStatement *newStm ;
         if(dynamic_cast<BlockStatement*>(stmTemp)!= NULL)
         {
+          cout<<"entro1" << endl;
           currentContexto += 1; 
           newStm = (NewStatement*)stmTemp->ValidarSemantica();
           currentContexto -= 1;
+          cout<<"entro2" << endl;
         }
         else
         {
-          newStm = (NewStatement*)stmTemp->ValidarSemantica();
+          cout<<"entro3" << endl;
+          newStm = (NewStatement*)(stmTemp->ValidarSemantica());
+          cout<<"entro4" << endl;
         }
-        if(newStm == NULL)
+        if(newStm == NULL){
+            string str = "Error en el bloque ";
+            ErrorSemantico(str);
             return NULL;
+        }
         newListStatement->push_back(newStm);
         it++;
     }
@@ -1224,7 +1254,7 @@ ValidarSemantica(MethodCallStatement)
 
   list<Expression*>::iterator it;
   it = parameters->begin();
-  while(it != parameters->end()) {
+  while(it != parameters->end()){
     NewExpression * newExpr = (NewExpression*)((*it)->ValidarSemantica());
     if(newExpr == NULL)
     {
@@ -1256,7 +1286,7 @@ ValidarSemantica(MethodDef)
         NewParameterDef *param = (NewParameterDef*)(*it)->ValidarSemantica();
         string str = param->newId;
         Type tipo = param->newParameterType;
-        Variable *var = new Variable(contextoNuevo->currentOffset,contextoNuevo->currentLevel,0,false,0,tipo);
+        Variable *var = new Variable(contextoNuevo->currentOffset,contextoNuevo->currentLevel,0,false,0,true,tipo);
         if(contextoNuevo->contextoMap[str] != NULL){
           string str = "Parametros repetidos";
           ErrorSemantico(str);
@@ -1270,8 +1300,9 @@ ValidarSemantica(MethodDef)
   }
   contextos[currentContexto] = contextoNuevo;
   contextoNuevo->contextoAnterior = contestoActual;
-  //NewBlockStatement *newBlockStatement = (NewBlockStatement*)block->ValidarSemantica();
-  NewBlockStatement *newBlockStatement = NULL;
+  cout<<"funcion: "<<id<<endl;
+  NewBlockStatement *newBlockStatement = (NewBlockStatement*)(block->ValidarSemantica());
+  //NewBlockStatement *newBlockStatement = NULL;
   if(methodDeclared[id] != NULL)
   {
     string str = "Metodo ya definido";
@@ -1297,13 +1328,25 @@ ValidarSemantica(VariableDef)
     Variable *newVariable;
     if(isArrayDef)
     {
-       // NewExpression* expr = (NewExpression*)initial_value->ValidarSemantica();   
-        newVariable = new Variable(offset,level,0,true,array_dimension,variable_type);
+        newVariable = new Variable(offset,level,0,true,array_dimension,false,variable_type);
     }
     else
     {
-       // NewExpression * expr = (NewExpression*)initial_value->ValidarSemantica();
-        newVariable = new Variable(offset,level,0,false,0,variable_type);
+        NewConstantExpression * expr = (NewConstantExpression*)initial_value->ValidarSemantica();
+        if(dynamic_cast<NewConstantIntExpression*>(expr) != NULL){
+            NewConstantIntExpression *intExpr = (NewConstantIntExpression*)expr;    
+            newVariable = new Variable(offset,level,intExpr->Newconstant,false,0,false,variable_type);
+        }
+        else
+        {
+            if(dynamic_cast<NewConstantBoolExpression*>(expr) != NULL){
+                NewConstantBoolExpression *boolExpr = (NewConstantBoolExpression*)expr;
+                if(boolExpr->Newconstant)
+                    newVariable = new Variable(offset,level,1,false,0,false,variable_type);
+                else
+                    newVariable = new Variable(offset,level,0,false,0,false,variable_type);
+            }
+        }
     }
     contextos[currentContexto]->contextoMap[id] = newVariable;
     return NULL;
@@ -1326,19 +1369,53 @@ ValidarSemantica(ContinueStatement)
 GenerarCodigo(NewClassDef)
 {
   ostringstream nuevo;
-  nuevo << "main : \n";
-  map<string,Procedimiento *>::iterator it;
-  it = methodDeclared.begin();
-  while(it != methodDeclared.end())
+  Contexto *contextoTemp = contextos[0];
+  map<string,Variable*>::iterator it1;
+  it1 = contextoTemp->contextoMap.begin();
+  nuevo << ".data \n";
+  while(it1 != contextoTemp->contextoMap.end())
   {
-    Procedimiento *p = it->second;
-    nuevo<<it->first <<" : \n";
-    nuevo<<"codigo \n";
-    it++;
+    Variable *var = (*it1).second;
+    if(var->isArray)
+    {
+        string label = getFreeLabel((*it1).first);
+        if(label == "NULL")
+            return "error !!";
+        nuevo << label << ": \n";
+        nuevo << ".space " << var->dimension * 4 << "\n";
+    }
+    else
+    {
+        string label = getFreeLabel((*it1).first);
+        if(label == "NULL")
+            return "error !!";
+        nuevo << label <<": \n";
+        if(var->type == Int){
+            if(var->value != 0)
+                nuevo << ".word " << var->value << " \n";
+            else
+                nuevo << ".word " << "0 \n";
+        }
+        else
+        {
+            if(var->value != 0)
+                nuevo << ".word " << "1 \n";
+            else
+                nuevo << ".word " << "0 \n";
+        }
+    }
+    it1++;
   }
-  
+  nuevo << ".text \n";
 
-
+  map<string,Procedimiento*>::iterator it2;
+  it2 = methodDeclared.begin();
+  while(it2 != methodDeclared.end()){
+      string label = getFreeLabel((*it2).first);
+      nuevo << label <<": \n";
+      nuevo << newBlockStatement->GenerarCodigo();
+      it2++;
+  }
   return nuevo.str();   
 }
 
@@ -1766,7 +1843,6 @@ GenerarCodigo(NewReadStatement)
         NewExpression *expr = (*it);
         nuevo << expr->GenerarCodigo();
         it++;
-
     }
 
     return nuevo.str();

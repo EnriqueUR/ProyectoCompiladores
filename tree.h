@@ -4,6 +4,7 @@
 #line 1 "tree.tc"
 
   #include <list>
+  #include <map>
   #include <iostream>
   using namespace std;
   
@@ -17,7 +18,13 @@
   class ConstantExpression;
   class ParameterDef;
   class BlockStatement;
+  class Procedimiento;
   class LValueExpression;
+  class NewStatement;
+  class NewExpression;
+  class ClassDef;
+  class NewClassDef;
+
   void AddStatement(BlockStatement *block,Statement *stm);
   typedef list<Statement *> StatementList;
   typedef list<Expression *> ExpressionList;
@@ -25,13 +32,60 @@
   typedef list<VariableDef *> VariableDefList;
   typedef list<MethodDef *> MethodDefList;
   typedef list<ParameterDef *> ParameterDefList;
-  
+
   typedef enum {OpAdd,OpSub,OpMul,OpDiv,OpMod,OpAnd,OpOr,OpNot,OpGT,OpLT,OpGTE,
   OpLTE,OpEq,OpNotEq,OpRShift,OpLShift,OpRot} ExpressionOperator;
-#line 32 "tree.h"
+  /* Aqui estan las nuevas listas */
+
+  typedef list<NewStatement *> NewStatementList;
+  typedef list<NewExpression *> NewExpressionList;
+
+#line 44 "tree.h"
 
 #include <new>
 
+const int TheNewClass_kind = 46;
+const int NewClassDef_kind = 47;
+const int NewExpression_kind = 48;
+const int NewStatement_kind = 49;
+const int NewConstantExpression_kind = 51;
+const int NewBinaryExpression_kind = 56;
+const int NewUnaryExpression_kind = 57;
+const int NewParameterDef_kind = 58;
+const int NewLValueExpression_kind = 59;
+const int NewMethodCallExpression_kind = 60;
+const int NewConstantIntExpression_kind = 52;
+const int NewConstantStringExpression_kind = 53;
+const int NewConstantBoolExpression_kind = 54;
+const int NewConstantCharExpression_kind = 55;
+const int NewAddExpression_kind = 61;
+const int NewSubExpression_kind = 62;
+const int NewMultExpression_kind = 63;
+const int NewDivExpression_kind = 64;
+const int NewLessThanExpression_kind = 65;
+const int NewLessThanEqualExpression_kind = 66;
+const int NewBigerThanExpression_kind = 67;
+const int NewBigerThanEqualExpression_kind = 68;
+const int NewEqualExpression_kind = 69;
+const int NewNotEqualExpression_kind = 70;
+const int NewShiftRightExpression_kind = 71;
+const int NewShiftLeftExpression_kind = 72;
+const int NewRotExpression_kind = 73;
+const int NewOrExpression_kind = 74;
+const int NewAndExpression_kind = 75;
+const int NewModExpression_kind = 77;
+const int NewNotExpression_kind = 76;
+const int NewIfStatement_kind = 78;
+const int NewWhileStatement_kind = 79;
+const int NewForStatement_kind = 80;
+const int NewAssignStatement_kind = 81;
+const int NewReadStatement_kind = 82;
+const int NewPrintStatement_kind = 83;
+const int NewMethodCallStatement_kind = 84;
+const int NewReturnStatement_kind = 85;
+const int NewBreakStatement_kind = 86;
+const int NewContinueStatement_kind = 87;
+const int NewBlockStatement_kind = 88;
 const int TheClass_kind = 2;
 const int Expression_kind = 3;
 const int Statement_kind = 4;
@@ -77,7 +131,50 @@ const int BreakStatement_kind = 43;
 const int ContinueStatement_kind = 44;
 const int BlockStatement_kind = 45;
 const int Main_kind = 1;
+const int Procedimiento_kind = 50;
 
+class TheNewClass;
+class NewClassDef;
+class NewExpression;
+class NewStatement;
+class NewConstantExpression;
+class NewBinaryExpression;
+class NewUnaryExpression;
+class NewParameterDef;
+class NewLValueExpression;
+class NewMethodCallExpression;
+class NewConstantIntExpression;
+class NewConstantStringExpression;
+class NewConstantBoolExpression;
+class NewConstantCharExpression;
+class NewAddExpression;
+class NewSubExpression;
+class NewMultExpression;
+class NewDivExpression;
+class NewLessThanExpression;
+class NewLessThanEqualExpression;
+class NewBigerThanExpression;
+class NewBigerThanEqualExpression;
+class NewEqualExpression;
+class NewNotEqualExpression;
+class NewShiftRightExpression;
+class NewShiftLeftExpression;
+class NewRotExpression;
+class NewOrExpression;
+class NewAndExpression;
+class NewModExpression;
+class NewNotExpression;
+class NewIfStatement;
+class NewWhileStatement;
+class NewForStatement;
+class NewAssignStatement;
+class NewReadStatement;
+class NewPrintStatement;
+class NewMethodCallStatement;
+class NewReturnStatement;
+class NewBreakStatement;
+class NewContinueStatement;
+class NewBlockStatement;
 class TheClass;
 class Expression;
 class Statement;
@@ -123,6 +220,7 @@ class BreakStatement;
 class ContinueStatement;
 class BlockStatement;
 class Main;
+class Procedimiento;
 
 class YYNODESTATE
 {
@@ -137,7 +235,7 @@ private:
 	struct YYNODESTATE_block *blocks__;
 	struct YYNODESTATE_push *push_stack__;
 	int used__;
-#line 141 "tree.h"
+#line 239 "tree.h"
 private:
 
 	static YYNODESTATE *state__;
@@ -161,6 +259,877 @@ public:
 	virtual void failed();
 	virtual char *currFilename();
 	virtual long currLinenum();
+
+};
+
+class TheNewClass
+{
+protected:
+
+	int kind__;
+	char *filename__;
+	long linenum__;
+
+public:
+
+	int getKind() const { return kind__; }
+	const char *getFilename() const { return filename__; }
+	long getLinenum() const { return linenum__; }
+	void setFilename(char *filename) { filename__ = filename; }
+	void setLinenum(long linenum) { linenum__ = linenum; }
+
+	void *operator new(size_t);
+	void operator delete(void *, size_t);
+
+protected:
+
+	TheNewClass();
+
+public:
+
+	virtual string GenerarCodigo() = 0;
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~TheNewClass();
+
+};
+
+class NewClassDef : public TheNewClass
+{
+public:
+
+	NewClassDef(string className, NewBlockStatement * newBlockStatement);
+
+public:
+
+	string className;
+	NewBlockStatement * newBlockStatement;
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewClassDef();
+
+};
+
+class NewExpression : public TheNewClass
+{
+protected:
+
+	NewExpression();
+
+public:
+
+	string place;
+	Type type;
+
+	virtual string GenerarCodigo() = 0;
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewExpression();
+
+};
+
+class NewStatement : public TheNewClass
+{
+protected:
+
+	NewStatement();
+
+public:
+
+	virtual string GenerarCodigo() = 0;
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewStatement();
+
+};
+
+class NewConstantExpression : public NewExpression
+{
+protected:
+
+	NewConstantExpression();
+
+public:
+
+	virtual string GenerarCodigo() = 0;
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewConstantExpression();
+
+};
+
+class NewBinaryExpression : public NewExpression
+{
+protected:
+
+	NewBinaryExpression(NewExpression * newfirstExpression, NewExpression * newSecondExpression);
+
+public:
+
+	NewExpression * newfirstExpression;
+	NewExpression * newSecondExpression;
+
+	virtual string GenerarCodigo() = 0;
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewBinaryExpression();
+
+};
+
+class NewUnaryExpression : public NewExpression
+{
+protected:
+
+	NewUnaryExpression(NewExpression * newfirstExpression);
+
+public:
+
+	NewExpression * newfirstExpression;
+
+	virtual string GenerarCodigo() = 0;
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewUnaryExpression();
+
+};
+
+class NewParameterDef : public NewExpression
+{
+public:
+
+	NewParameterDef(string newId, Type newParameterType);
+
+public:
+
+	string newId;
+	Type newParameterType;
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewParameterDef();
+
+};
+
+class NewLValueExpression : public NewExpression
+{
+public:
+
+	NewLValueExpression(string newId, NewExpression * newExpr, int offset, int level);
+
+public:
+
+	string newId;
+	NewExpression * newExpr;
+	int offset;
+	int level;
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewLValueExpression();
+
+};
+
+class NewMethodCallExpression : public NewExpression
+{
+public:
+
+	NewMethodCallExpression(string newId, NewExpressionList * newParameters);
+
+public:
+
+	string newId;
+	NewExpressionList * newParameters;
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewMethodCallExpression();
+
+};
+
+class NewConstantIntExpression : public NewConstantExpression
+{
+public:
+
+	NewConstantIntExpression(int Newconstant);
+
+public:
+
+	int Newconstant;
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewConstantIntExpression();
+
+};
+
+class NewConstantStringExpression : public NewConstantExpression
+{
+public:
+
+	NewConstantStringExpression(string Newconstant);
+
+public:
+
+	string Newconstant;
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewConstantStringExpression();
+
+};
+
+class NewConstantBoolExpression : public NewConstantExpression
+{
+public:
+
+	NewConstantBoolExpression(bool Newconstant);
+
+public:
+
+	bool Newconstant;
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewConstantBoolExpression();
+
+};
+
+class NewConstantCharExpression : public NewConstantExpression
+{
+public:
+
+	NewConstantCharExpression(char Newconstant);
+
+public:
+
+	char Newconstant;
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewConstantCharExpression();
+
+};
+
+class NewAddExpression : public NewBinaryExpression
+{
+public:
+
+	NewAddExpression(NewExpression * newfirstExpression, NewExpression * newSecondExpression);
+
+public:
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewAddExpression();
+
+};
+
+class NewSubExpression : public NewBinaryExpression
+{
+public:
+
+	NewSubExpression(NewExpression * newfirstExpression, NewExpression * newSecondExpression);
+
+public:
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewSubExpression();
+
+};
+
+class NewMultExpression : public NewBinaryExpression
+{
+public:
+
+	NewMultExpression(NewExpression * newfirstExpression, NewExpression * newSecondExpression);
+
+public:
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewMultExpression();
+
+};
+
+class NewDivExpression : public NewBinaryExpression
+{
+public:
+
+	NewDivExpression(NewExpression * newfirstExpression, NewExpression * newSecondExpression);
+
+public:
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewDivExpression();
+
+};
+
+class NewLessThanExpression : public NewBinaryExpression
+{
+public:
+
+	NewLessThanExpression(NewExpression * newfirstExpression, NewExpression * newSecondExpression);
+
+public:
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewLessThanExpression();
+
+};
+
+class NewLessThanEqualExpression : public NewBinaryExpression
+{
+public:
+
+	NewLessThanEqualExpression(NewExpression * newfirstExpression, NewExpression * newSecondExpression);
+
+public:
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewLessThanEqualExpression();
+
+};
+
+class NewBigerThanExpression : public NewBinaryExpression
+{
+public:
+
+	NewBigerThanExpression(NewExpression * newfirstExpression, NewExpression * newSecondExpression);
+
+public:
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewBigerThanExpression();
+
+};
+
+class NewBigerThanEqualExpression : public NewBinaryExpression
+{
+public:
+
+	NewBigerThanEqualExpression(NewExpression * newfirstExpression, NewExpression * newSecondExpression);
+
+public:
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewBigerThanEqualExpression();
+
+};
+
+class NewEqualExpression : public NewBinaryExpression
+{
+public:
+
+	NewEqualExpression(NewExpression * newfirstExpression, NewExpression * newSecondExpression);
+
+public:
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewEqualExpression();
+
+};
+
+class NewNotEqualExpression : public NewBinaryExpression
+{
+public:
+
+	NewNotEqualExpression(NewExpression * newfirstExpression, NewExpression * newSecondExpression);
+
+public:
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewNotEqualExpression();
+
+};
+
+class NewShiftRightExpression : public NewBinaryExpression
+{
+public:
+
+	NewShiftRightExpression(NewExpression * newfirstExpression, NewExpression * newSecondExpression);
+
+public:
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewShiftRightExpression();
+
+};
+
+class NewShiftLeftExpression : public NewBinaryExpression
+{
+public:
+
+	NewShiftLeftExpression(NewExpression * newfirstExpression, NewExpression * newSecondExpression);
+
+public:
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewShiftLeftExpression();
+
+};
+
+class NewRotExpression : public NewBinaryExpression
+{
+public:
+
+	NewRotExpression(NewExpression * newfirstExpression, NewExpression * newSecondExpression);
+
+public:
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewRotExpression();
+
+};
+
+class NewOrExpression : public NewBinaryExpression
+{
+public:
+
+	NewOrExpression(NewExpression * newfirstExpression, NewExpression * newSecondExpression);
+
+public:
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewOrExpression();
+
+};
+
+class NewAndExpression : public NewBinaryExpression
+{
+public:
+
+	NewAndExpression(NewExpression * newfirstExpression, NewExpression * newSecondExpression);
+
+public:
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewAndExpression();
+
+};
+
+class NewModExpression : public NewBinaryExpression
+{
+public:
+
+	NewModExpression(NewExpression * newfirstExpression, NewExpression * newSecondExpression);
+
+public:
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewModExpression();
+
+};
+
+class NewNotExpression : public NewUnaryExpression
+{
+public:
+
+	NewNotExpression(NewExpression * newfirstExpression);
+
+public:
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewNotExpression();
+
+};
+
+class NewIfStatement : public NewStatement
+{
+public:
+
+	NewIfStatement(NewExpression * newCondition, NewStatement * newStatementTrue, NewStatement * newStatementFalse);
+
+public:
+
+	NewExpression * newCondition;
+	NewStatement * newStatementTrue;
+	NewStatement * newStatementFalse;
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewIfStatement();
+
+};
+
+class NewWhileStatement : public NewStatement
+{
+public:
+
+	NewWhileStatement(NewExpression * newCondition, NewStatement * newStatementTrue);
+
+public:
+
+	NewExpression * newCondition;
+	NewStatement * newStatementTrue;
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewWhileStatement();
+
+};
+
+class NewForStatement : public NewStatement
+{
+public:
+
+	NewForStatement(NewStatement * newFirstListAssign, NewExpression * newCondition, NewStatement * newLastListAssign, NewStatement * newStatementTrue);
+
+public:
+
+	NewStatement * newFirstListAssign;
+	NewExpression * newCondition;
+	NewStatement * newLastListAssign;
+	NewStatement * newStatementTrue;
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewForStatement();
+
+};
+
+class NewAssignStatement : public NewStatement
+{
+public:
+
+	NewAssignStatement(NewExpression * newLeftValue, NewExpression * newValue);
+
+public:
+
+	NewExpression * newLeftValue;
+	NewExpression * newValue;
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewAssignStatement();
+
+};
+
+class NewReadStatement : public NewStatement
+{
+public:
+
+	NewReadStatement(NewExpressionList * newListExpression);
+
+public:
+
+	NewExpressionList * newListExpression;
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewReadStatement();
+
+};
+
+class NewPrintStatement : public NewStatement
+{
+public:
+
+	NewPrintStatement(NewExpressionList * newListExpression);
+
+public:
+
+	NewExpressionList * newListExpression;
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewPrintStatement();
+
+};
+
+class NewMethodCallStatement : public NewStatement
+{
+public:
+
+	NewMethodCallStatement(string id, NewExpressionList * newParameters);
+
+public:
+
+	string id;
+	NewExpressionList * newParameters;
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewMethodCallStatement();
+
+};
+
+class NewReturnStatement : public NewStatement
+{
+public:
+
+	NewReturnStatement(NewExpression * newReturnExpression);
+
+public:
+
+	NewExpression * newReturnExpression;
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewReturnStatement();
+
+};
+
+class NewBreakStatement : public NewStatement
+{
+public:
+
+	NewBreakStatement();
+
+public:
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewBreakStatement();
+
+};
+
+class NewContinueStatement : public NewStatement
+{
+public:
+
+	NewContinueStatement();
+
+public:
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewContinueStatement();
+
+};
+
+class NewBlockStatement : public NewStatement
+{
+public:
+
+	NewBlockStatement();
+
+public:
+
+	NewStatementList * newListStatements;
+
+	virtual string GenerarCodigo();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~NewBlockStatement();
 
 };
 
@@ -190,6 +1159,7 @@ protected:
 public:
 
 	virtual string ToString() = 0;
+	virtual TheNewClass * ValidarSemantica() = 0;
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -209,6 +1179,7 @@ protected:
 public:
 
 	virtual string ToString() = 0;
+	virtual TheNewClass * ValidarSemantica() = 0;
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -228,6 +1199,7 @@ protected:
 public:
 
 	virtual string ToString() = 0;
+	virtual TheNewClass * ValidarSemantica() = 0;
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -251,6 +1223,7 @@ public:
 	MethodDefList * listMethod;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -265,14 +1238,15 @@ class BinaryExpression : public Expression
 {
 protected:
 
-	BinaryExpression(Expression * FirstExpression, Expression * SecondExpression);
+	BinaryExpression(Expression * firstExpression, Expression * secondExpression);
 
 public:
 
-	Expression * FirstExpression;
-	Expression * SecondExpression;
+	Expression * firstExpression;
+	Expression * secondExpression;
 
 	virtual string ToString() = 0;
+	virtual TheNewClass * ValidarSemantica() = 0;
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -287,13 +1261,14 @@ class UnaryExpression : public Expression
 {
 protected:
 
-	UnaryExpression(Expression * FirstExpression);
+	UnaryExpression(Expression * firstExpression);
 
 public:
 
-	Expression * FirstExpression;
+	Expression * firstExpression;
 
 	virtual string ToString() = 0;
+	virtual TheNewClass * ValidarSemantica() = 0;
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -313,6 +1288,7 @@ protected:
 public:
 
 	virtual string ToString() = 0;
+	virtual TheNewClass * ValidarSemantica() = 0;
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -335,6 +1311,7 @@ public:
 	ExpressionList * parameters;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -357,6 +1334,7 @@ public:
 	Expression * expr;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -379,6 +1357,7 @@ public:
 	Type parameterType;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -393,11 +1372,12 @@ class AddExpression : public BinaryExpression
 {
 public:
 
-	AddExpression(Expression * FirstExpression, Expression * SecondExpression);
+	AddExpression(Expression * firstExpression, Expression * secondExpression);
 
 public:
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -412,11 +1392,12 @@ class SubExpression : public BinaryExpression
 {
 public:
 
-	SubExpression(Expression * FirstExpression, Expression * SecondExpression);
+	SubExpression(Expression * firstExpression, Expression * secondExpression);
 
 public:
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -431,11 +1412,12 @@ class MultExpression : public BinaryExpression
 {
 public:
 
-	MultExpression(Expression * FirstExpression, Expression * SecondExpression);
+	MultExpression(Expression * firstExpression, Expression * secondExpression);
 
 public:
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -450,11 +1432,12 @@ class DivExpression : public BinaryExpression
 {
 public:
 
-	DivExpression(Expression * FirstExpression, Expression * SecondExpression);
+	DivExpression(Expression * firstExpression, Expression * secondExpression);
 
 public:
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -469,11 +1452,12 @@ class LessThanExpression : public BinaryExpression
 {
 public:
 
-	LessThanExpression(Expression * FirstExpression, Expression * SecondExpression);
+	LessThanExpression(Expression * firstExpression, Expression * secondExpression);
 
 public:
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -488,11 +1472,12 @@ class LessThanEqualExpression : public BinaryExpression
 {
 public:
 
-	LessThanEqualExpression(Expression * FirstExpression, Expression * SecondExpression);
+	LessThanEqualExpression(Expression * firstExpression, Expression * secondExpression);
 
 public:
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -507,11 +1492,12 @@ class BigerThanExpression : public BinaryExpression
 {
 public:
 
-	BigerThanExpression(Expression * FirstExpression, Expression * SecondExpression);
+	BigerThanExpression(Expression * firstExpression, Expression * secondExpression);
 
 public:
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -526,11 +1512,12 @@ class BigerThanEqualExpression : public BinaryExpression
 {
 public:
 
-	BigerThanEqualExpression(Expression * FirstExpression, Expression * SecondExpression);
+	BigerThanEqualExpression(Expression * firstExpression, Expression * secondExpression);
 
 public:
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -545,11 +1532,12 @@ class EqualExpression : public BinaryExpression
 {
 public:
 
-	EqualExpression(Expression * FirstExpression, Expression * SecondExpression);
+	EqualExpression(Expression * firstExpression, Expression * secondExpression);
 
 public:
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -564,11 +1552,12 @@ class NotEqualExpression : public BinaryExpression
 {
 public:
 
-	NotEqualExpression(Expression * FirstExpression, Expression * SecondExpression);
+	NotEqualExpression(Expression * firstExpression, Expression * secondExpression);
 
 public:
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -583,11 +1572,12 @@ class ShiftRightExpression : public BinaryExpression
 {
 public:
 
-	ShiftRightExpression(Expression * FirstExpression, Expression * SecondExpression);
+	ShiftRightExpression(Expression * firstExpression, Expression * secondExpression);
 
 public:
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -602,11 +1592,12 @@ class ShiftLeftExpression : public BinaryExpression
 {
 public:
 
-	ShiftLeftExpression(Expression * FirstExpression, Expression * SecondExpression);
+	ShiftLeftExpression(Expression * firstExpression, Expression * secondExpression);
 
 public:
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -621,11 +1612,12 @@ class RotExpression : public BinaryExpression
 {
 public:
 
-	RotExpression(Expression * FirstExpression, Expression * SecondExpression);
+	RotExpression(Expression * firstExpression, Expression * secondExpression);
 
 public:
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -640,11 +1632,12 @@ class OrExpression : public BinaryExpression
 {
 public:
 
-	OrExpression(Expression * FirstExpression, Expression * SecondExpression);
+	OrExpression(Expression * firstExpression, Expression * secondExpression);
 
 public:
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -659,11 +1652,12 @@ class AndExpression : public BinaryExpression
 {
 public:
 
-	AndExpression(Expression * FirstExpression, Expression * SecondExpression);
+	AndExpression(Expression * firstExpression, Expression * secondExpression);
 
 public:
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -678,11 +1672,12 @@ class ModExpression : public BinaryExpression
 {
 public:
 
-	ModExpression(Expression * FirstExpression, Expression * SecondExpression);
+	ModExpression(Expression * firstExpression, Expression * secondExpression);
 
 public:
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -697,11 +1692,12 @@ class NotExpression : public UnaryExpression
 {
 public:
 
-	NotExpression(Expression * FirstExpression);
+	NotExpression(Expression * firstExpression);
 
 public:
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -723,6 +1719,7 @@ public:
 	int constant;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -744,6 +1741,7 @@ public:
 	bool constant;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -765,6 +1763,7 @@ public:
 	char constant;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -786,6 +1785,7 @@ public:
 	string constant;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -807,12 +1807,13 @@ public:
 	string id;
 	int first_line;
 	int first_column;
-	Expression * initial_value;
+	ConstantExpression * initial_value;
 	bool isArrayDef;
 	int array_dimension;
 	Type variable_type;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -837,6 +1838,7 @@ public:
 	Type returnType;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -862,6 +1864,7 @@ public:
 	int first_column;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -886,6 +1889,7 @@ public:
 	int first_column;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -900,18 +1904,19 @@ class ForStatement : public Statement
 {
 public:
 
-	ForStatement(Statement * firstListAssign, Expression * condition, Statement * lasttListAssign, Statement * statementTrue, int first_line, int first_column);
+	ForStatement(Statement * firstListAssign, Expression * condition, Statement * lastListAssign, Statement * statementTrue, int first_line, int first_column);
 
 public:
 
 	Statement * firstListAssign;
 	Expression * condition;
-	Statement * lasttListAssign;
+	Statement * lastListAssign;
 	Statement * statementTrue;
 	int first_line;
 	int first_column;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -936,6 +1941,7 @@ public:
 	int first_column;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -959,6 +1965,7 @@ public:
 	int first_column;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -982,6 +1989,7 @@ public:
 	int first_column;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -996,16 +2004,17 @@ class MethodCallStatement : public Statement
 {
 public:
 
-	MethodCallStatement(string name, ExpressionList * parameters, int first_line, int first_column);
+	MethodCallStatement(string id, ExpressionList * parameters, int first_line, int first_column);
 
 public:
 
-	string name;
+	string id;
 	ExpressionList * parameters;
 	int first_line;
 	int first_column;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -1029,6 +2038,7 @@ public:
 	int first_column;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -1051,6 +2061,7 @@ public:
 	int first_column;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -1073,6 +2084,7 @@ public:
 	int first_column;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -1096,6 +2108,7 @@ public:
 	int first_column;
 
 	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
 	virtual void AddStatement(Statement * stm);
 
 	virtual int isA(int kind) const;
@@ -1141,6 +2154,44 @@ public:
 protected:
 
 	virtual ~Main();
+
+};
+
+class Procedimiento
+{
+protected:
+
+	int kind__;
+	char *filename__;
+	long linenum__;
+
+public:
+
+	int getKind() const { return kind__; }
+	const char *getFilename() const { return filename__; }
+	long getLinenum() const { return linenum__; }
+	void setFilename(char *filename) { filename__ = filename; }
+	void setLinenum(long linenum) { linenum__ = linenum; }
+
+	void *operator new(size_t);
+	void operator delete(void *, size_t);
+
+public:
+
+	Procedimiento(string id, NewBlockStatement * newBlockStatement);
+
+public:
+
+	string id;
+	NewBlockStatement * newBlockStatement;
+
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~Procedimiento();
 
 };
 

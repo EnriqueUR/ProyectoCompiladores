@@ -40,6 +40,8 @@ int main(int argc, char *argv[])
 	if (errors == 0) {
         if(class_def != 0)
            newClassDef = (NewClassDef*)class_def->ValidarSemantica();
+
+    //cout << newClassDef->GenerarCodigo();
       
 	}
 

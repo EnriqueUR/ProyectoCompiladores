@@ -1,6 +1,9 @@
 class quicksort {
-	int arraySize = 5;
+	int arraySize=5;
 	int array[30];
+	boolean uno = false;
+	boolean dos = true;
+
 
 	void quicksort(int izq, int der) {
 		if (izq < der) {
@@ -11,10 +14,10 @@ class quicksort {
 		}
 	}
 	
-	int particionar(int izq, int der){
+	int particionar(int izq, int der, int otro){
 		//int p;
 		//int i, j;
-		p = array[izq];		
+		p = array[izq];		 
 		i = izq; 
 		j = der;
 		while (i < j) {

@@ -9,9 +9,12 @@
 #define VALUE_H_
 
 #include <string>
+#include <iostream> 
 #include <list>
+#include <map>
 
 using namespace std;
+
 
 typedef unsigned char byte;
 
@@ -40,6 +43,11 @@ inline string TypeToString(Type type)
 	return "None";
 }
 
+inline void ErrorSemantico(string str)
+{
+	cout << str;
+}
+
 /*
  * Esta estructura representa el atributo sintetizado en la 
  * generacion de código de una Expresion.
@@ -60,5 +68,44 @@ struct Constant
 	} value;
 };
 
+class Variable
+{
+public:
+	Variable(int offset,int level, int value, bool isArray,int dimension,int isParameter,Type type)
+	{
+		this->offset = offset;
+		this->level = level;
+		this->value = value;
+		this->isArray = isArray;
+		this->dimension = dimension;
+		this->type = type;
+		this->isParameter = isParameter;
+	}
+	~Variable(){}
+
+	int offset;
+    int level;
+    int value;
+    bool isArray;
+    bool isParameter;
+    int dimension;
+    Type type; 
+};
+class Contexto
+{
+public:
+	Contexto(){
+		this->currentOffset = 0;
+		this->currentLevel = 0;
+		contextoAnterior = NULL;
+	}
+
+	~Contexto(){}
+
+	map<string, Variable*> contextoMap;
+    int currentOffset;
+    int currentLevel;
+    Contexto *contextoAnterior;
+};
 
 #endif /* VALUE_H_ */
