@@ -45,7 +45,7 @@ inline string TypeToString(Type type)
 
 inline void ErrorSemantico(string str)
 {
-	cout << str;
+	cout << str << endl;
 }
 
 /*

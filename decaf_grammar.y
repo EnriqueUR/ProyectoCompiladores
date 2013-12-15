@@ -48,6 +48,7 @@ VariableDefList *SetType(VariableDefList *list, Type type)
 	char			*string;
 	int			integer;
 	bool			boolean;
+
 }
 
 %locations
@@ -109,12 +110,13 @@ VariableDefList *SetType(VariableDefList *list, Type type)
 %type<variable_def> var
 %type<variable_def_list> field_decl field_decl_list var_list optional_field_decl_list
 %type<method_def> method_decl
+%type<statement> local_variable_decl local_variable_list 
 %type<method_def_list> optional_method_decl_list method_decl_list
 %type<parameter_def> parameter_decl
 %type<parameter_def_list> opt_parameter_decl_list parameter_decl_list
 %type<class_def> class_def
-%type<string> class_name method_name
-%type<statement_list>	opt_statement_list statement_list
+%type<string> class_name method_name local_variable
+%type<statement_list> opt_statement_list statement_list
 %type<type> return_type type
 
 %expect 4
@@ -241,8 +243,9 @@ statement_list:
 		| statement			{ $$ = new StatementList(); $$->push_back($1); }
 ;
 		
-statement
-	:	assign ';'			{ $$ = $1; }
+statement:
+		assign ';'			{ $$ = $1; }
+		| local_variable_decl ';' { $$ = $1; }
 		| method_call ';'		{ $$ = $1; }
 		| if_statement			{ $$ = $1; }
 		| while_statement 		{ $$ = $1; }
@@ -252,7 +255,22 @@ statement
 		| continue_statement ';'	{ $$ = $1; }
 		| block 			{ $$ = $1; }
 ;
-		
+
+local_variable_decl:
+                type local_variable_list {$$ = $2; ((LocalVariableDef*)$$)->variable_type = $1; }
+;
+
+local_variable_list: local_variable_list ',' local_variable {$$ = $1; ((LocalVariableDef*)$$)->variable_names->push_back($3);}
+                     |local_variable      {$$ = new LocalVariableDef(@1.first_line, @1.first_column);
+                                           ((LocalVariableDef*)$$)->variable_names = new list<string>();
+                                           ((LocalVariableDef*)$$)->variable_names->push_back($1);
+                                           }
+;
+
+local_variable: ID {$$ = $1;}
+;
+
+
 assign	:
 		lvalue '=' expr { $$ = new AssignStatement($1, $3, @1.first_line, @1.first_column); };
 		
@@ -321,7 +339,8 @@ for_statement:
 
 for_assignment_list:
 			for_assignment_list ',' assign		{ $$ = $1; ((BlockStatement*)$$)->AddStatement($3); }
-			| assign				{ $$ = new BlockStatement(@1.first_line, @1.first_column); }
+			| assign				{ $$ = new BlockStatement(@1.first_line, @1.first_column); 
+									((BlockStatement*)$$)->AddStatement($1);}
 ;
 
 return_statement:

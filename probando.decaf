@@ -1,6 +1,13 @@
 class probando{
-  int x;
-  void hola(int uno,int dos){
- 
+  int dos[10];
+  int x = 1;
+  void hola(int i){
+ 		//for(i = 0; i < tres; i = i + 1){
+			print i;
+		//}
+  }
+  void main()
+  {
+  	hola(10);
   }
 }

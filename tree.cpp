@@ -1,12 +1,86 @@
 /* tree.cpp.  Generated automatically by treecc */
-#line 41 "tree.tc"
+#line 43 "tree.tc"
+
 
 #include "tree.h"
-void FreeRegister(string register)
-{
-    /* hacer algo */
-} 
+
+map<string,string> variableStringMap;
+list<string> listVariableName;
+
 list<string> arrayList;
+
+list<string> stackCurrentLabelBreak;
+list<string> stackCurrentLabelContinue;
+
+list<string> listElseLabel;
+list<string> listIfLabel;
+list<string> listEndIfLabel;
+
+list<string> listStartWhileLabel;
+list<string> listWhileLabel;
+list<string> listEndWhileLabel;
+
+list<string> listStartForLabel;
+list<string> listForLabel;
+list<string> listEndForLabel;
+list<string> listContinuePointFor;
+
+list<string> listRegister;
+list<string> listRegisterS;
+
+void FreeRegister(string reg)
+{
+   if(reg != ""){
+    listRegister.push_back(reg);
+    listRegister.unique();
+   }
+} 
+string getFreeRegister()
+{
+    int cant = listRegister.size(); 
+    if( cant > 0){
+        string reg = listRegister.back(); 
+        listRegister.pop_back(); 
+        return reg;
+    }else
+        return "NULL";
+}
+void iniciarRegistros()
+{
+    for(int i=0;i<8;i++)
+    {
+      ostringstream reg;
+      reg << "$t" << i;
+      listRegister.push_front(reg.str());
+    }
+}
+
+void FreeRegisterS(string reg)
+{
+   if(reg != ""){
+    listRegister.push_back(reg);
+    listRegister.unique();
+   }
+} 
+string getFreeRegisterS()
+{
+    int cant = listRegister.size(); 
+    if( cant > 0){
+        string reg = listRegister.back(); 
+        listRegister.pop_back(); 
+        return reg;
+    }else
+        return "NULL";
+}
+void iniciarRegistrosS()
+{
+    for(int i=0;i<4;i++)
+    {
+      ostringstream reg;
+      reg << "$a" << i;
+      listRegister.push_front(reg.str());
+    }
+}
 
 string getFreeLabel(string label)
 {
@@ -21,24 +95,108 @@ string getFreeLabel(string label)
     return label;
 }
 
-string getFreeRegister(){return " ";}
+string getLabel(string label){
+    if(label == "if")
+    {
+        ostringstream out;
+        int indice = listIfLabel.size();
+        out <<"if"<<indice;
+        listIfLabel.push_back(out.str());
+        return out.str();
+    }
+    if(label == "else")
+    {
+        ostringstream out;
+        int indice = listElseLabel.size();
+        out <<"else"<<indice;
+        listElseLabel.push_back(out.str());
+        return out.str();
+    }
+    if(label == "endIf")
+    {
+        ostringstream out;
+        int indice = listEndIfLabel.size();
+        out <<"endIf"<<indice;
+        listEndIfLabel.push_back(out.str());
+        return out.str();
+    }
+    if(label == "startWhile")
+    {
+        ostringstream out;
+        int indice = listStartWhileLabel.size();
+        out <<"startWhile"<<indice;
+        listStartWhileLabel.push_back(out.str());
+        return out.str();
+    }
+    if(label == "while")
+    {
+        ostringstream out;
+        int indice = listStartWhileLabel.size();
+        out <<"while"<<indice;
+        listWhileLabel.push_back(out.str());
+        return out.str();
+    }
+    if(label == "endWhile")
+    {
+        ostringstream out;
+        int indice = listEndWhileLabel.size();
+        out <<"endWhile"<<indice;
+        listEndWhileLabel.push_back(out.str());
+        return out.str();
+    }
+    if(label == "startFor")
+    {
+        ostringstream out;
+        int indice = listStartForLabel.size();
+        out <<"startFor"<<indice;
+        listStartForLabel.push_back(out.str());
+        return out.str();
+    }
+    if(label == "for")
+    {
+        ostringstream out;
+        int indice = listForLabel.size();
+        out <<"for"<<indice;
+        listForLabel.push_back(out.str());
+        return out.str();
+    }
+    if(label == "endFor")
+    {
+        ostringstream out;
+        int indice = listEndForLabel.size();
+        out <<"endFor"<<indice;
+        listEndForLabel.push_back(out.str());
+        return out.str();
+    }
+    if(label == "continuePoint")
+    {
+        ostringstream out;
+        int indice = listContinuePointFor.size();
+        out <<"continuePoint"<<indice;
+        listContinuePointFor.push_back(out.str());
+        return out.str();
+    }
+    if(label == "var_str")
+    {
+        ostringstream out;
+        int indice = listVariableName.size();
+        out <<"var_str"<<indice;
+        listVariableName.push_back(out.str());
+        return out.str();
+    }
+    
+    return "";
 
-string getLabel(string label){return "";}
+}
 
 map<string,Procedimiento *> methodDeclared;
+map<string,Variable*> variableDeclared; 
+int currentOffset = 0;
 
 int currentContexto = 0; 
 Contexto *contextos[10];
 
-list<string> stackCurrentLabel;
-list<string> listElseLabel;
-list<string> listIfLabel;
-list<string> listEndIfLabel;
-list<string> listWhileLabel;
-list<string> listEndWhileLabel;
-list<string> listForLabel;
-list<string> listEndForLabel;
-#line 42 "tree.cpp"
+#line 200 "tree.cpp"
 
 #define YYNODESTATE_TRACK_LINES 1
 #define YYNODESTATE_USE_ALLOCATOR 1
@@ -317,7 +475,7 @@ long YYNODESTATE::currLinenum()
 }
 
 #endif
-#line 321 "tree.cpp"
+#line 479 "tree.cpp"
 void *TheNewClass::operator new(size_t size__)
 {
 	return YYNODESTATE::getState()->alloc(size__);
@@ -367,16 +525,18 @@ NewClassDef::~NewClassDef()
 }
 
 string NewClassDef::GenerarCodigo()
-#line 1369 "tree.tc"
+#line 1669 "tree.tc"
 {
+  currentContexto = 0;
+  iniciarRegistros();
   ostringstream nuevo;
   Contexto *contextoTemp = contextos[0];
   map<string,Variable*>::iterator it1;
-  it1 = contextoTemp->contextoMap.begin();
+  it1 = variableDeclared.begin();
   nuevo << ".data \n";
-  while(it1 != contextoTemp->contextoMap.end())
+  while(it1 != variableDeclared.end())
   {
-    Variable *var = (*it1).second;
+    Variable *var = it1->second;
     if(var->isArray)
     {
         string label = getFreeLabel((*it1).first);
@@ -407,19 +567,68 @@ string NewClassDef::GenerarCodigo()
     }
     it1++;
   }
+  map<string,string>::iterator mapIt;
+  mapIt = variableStringMap.begin();
+  while(mapIt != variableStringMap.end()) {
+      nuevo << (*mapIt).first << ": \n";
+      nuevo << ".asciiz " << (*mapIt).second  << "\n"; 
+      mapIt++;
+  }
   nuevo << ".text \n";
 
+  nuevo << "main: \n";
+  nuevo << newBlockStatement->GenerarCodigo();
+  nuevo << "j end"<<endl;
+  ostringstream epilogo,prologo;
+  
+  epilogo << "";
   map<string,Procedimiento*>::iterator it2;
   it2 = methodDeclared.begin();
-  while(it2 != methodDeclared.end()){
-      string label = getFreeLabel((*it2).first);
-      nuevo << label <<": \n";
-      nuevo << newBlockStatement->GenerarCodigo();
+  while(it2 != methodDeclared.end()) {
+      Procedimiento*pro = (*it2).second;
+      if(pro->id != "main" ){
+        
+        nuevo << pro->id << ": \n";
+        prologo << "addi $sp, $sp, -32 " << endl;
+        for (int i = 0; i < 8; i++) {
+            prologo << "sw $s" << i << ", " << (i*4) << "($sp)" << endl;
+        }
+        prologo << "addi " << "$sp, " << "$sp, " << "-8"<<endl;
+        prologo << "sw $ra, 0($sp)"<<endl;
+        prologo << "sw $fp, 4($sp)"<<endl; 
+
+        Contexto *con = contextos[0];
+        map<string,Variable*>::iterator varIt;
+        varIt = con->contextoMap.begin();
+        while(varIt != con->contextoMap.end()) {
+             Variable *var = varIt->second;
+             /*if(var->isParameter)
+             {
+                prologo << "sw "<< << ", " << var->offset*4 << "($sp)";
+             }*/
+             varIt++;
+         } 
+        nuevo << prologo.str();
+        nuevo << pro->newBlockStatement->GenerarCodigo();
+        
+        epilogo << "lw $ra, 0($sp)"<<endl;
+        epilogo << "lw $fp, 4($sp)"<<endl;
+        epilogo << "addi $sp, $sp, 8"<<endl;
+        for (int i = 0; i < 8; i++) {
+            epilogo << "lw $s" << i << ", " << (i*4) << "($sp)" << endl;
+        }
+        epilogo << "addi $sp, $sp, 32" << endl; 
+        nuevo << epilogo.str();
+        nuevo << "jr $ra"<< endl;
+        nuevo << "end:" <<endl;
+      }
       it2++;
   }
+  
+
   return nuevo.str();   
 }
-#line 423 "tree.cpp"
+#line 632 "tree.cpp"
 
 int NewClassDef::isA(int kind) const
 {
@@ -571,9 +780,9 @@ NewParameterDef::~NewParameterDef()
 }
 
 string NewParameterDef::GenerarCodigo()
-#line 1858 "tree.tc"
-{return "falta";}
-#line 577 "tree.cpp"
+#line 2351 "tree.tc"
+{return "NADA \n";}
+#line 786 "tree.cpp"
 
 int NewParameterDef::isA(int kind) const
 {
@@ -596,6 +805,9 @@ NewLValueExpression::NewLValueExpression(string newId, NewExpression * newExpr, 
 	this->newExpr = newExpr;
 	this->offset = offset;
 	this->level = level;
+	this->isGlobal = false;
+	this->isParameter = false;
+	this->isLocal = false;
 }
 
 NewLValueExpression::~NewLValueExpression()
@@ -604,9 +816,73 @@ NewLValueExpression::~NewLValueExpression()
 }
 
 string NewLValueExpression::GenerarCodigo()
-#line 1860 "tree.tc"
-{return "falta";}
-#line 610 "tree.cpp"
+#line 2264 "tree.tc"
+{
+    ostringstream nuevo;
+
+    string regS = getFreeRegisterS();
+    Contexto *context = contextos[0];
+
+   // if (isGlobal) 
+   // {    
+        nuevo << "la " << regS << ", " << newId << endl;
+        if (newExpr != NULL) {
+            nuevo << newExpr->GenerarCodigo();
+            nuevo << "sll " << newExpr->place << ", " << newExpr->place << ", 2" << endl;
+            nuevo << "add " << regS << ", " << regS << ", "<< newExpr->place << endl;
+        }
+        
+   /* }
+     else if (isParameter) {
+        nuevo << "addi " << regS << ", $fp, " << (offset*4)*-1 << endl;
+    }
+     else 
+    {
+        nuevo << "la " << regS << ", display" << endl;
+        nuevo << "addi " << regS << ", " << regS << ", " << (level*4) << endl;
+        nuevo << "lw " << regS << ", 0(" << regS << ")" << endl;
+        nuevo << "addi " << regS << ", " << regS << ", " << (offset * 4)+4 << endl;
+      }*/
+    nuevo <<"lw " << regS << ", 0(" << regS << ")" << endl;
+    this->place = regS;
+
+    return nuevo.str();
+}
+#line 852 "tree.cpp"
+
+string NewLValueExpression::GetDirLValue()
+#line 2355 "tree.tc"
+{
+ ostringstream nuevo;
+
+    string regS = getFreeRegisterS();
+    Contexto *context = contextos[0];
+
+    //if (isGlobal) 
+    //{    
+        nuevo << "la " << regS << ", " << newId << endl;
+        if (newExpr != NULL) {
+            nuevo << newExpr->GenerarCodigo();
+            nuevo << "sll " << newExpr->place << ", " << newExpr->place << ", 2" << endl;
+            nuevo << "add " << regS << ", " << regS << ", "<< newExpr->place << endl;
+        }
+        
+    /*}
+     else if (isParameter) {
+        nuevo << "addi " << regS << ", $fp, " << (offset*4)*-1 << endl;
+    }
+     else 
+    {
+        nuevo << "la " << regS << ", display" << endl;
+        nuevo << "addi " << regS << ", " << regS << ", " << (level*4) << endl;
+        nuevo << "lw " << regS << ", 0(" << regS << ")" << endl;
+        nuevo << "addi " << regS << ", " << regS << ", " << (offset * 4)+4 << endl;
+      }*/
+    this->place = regS;
+
+    return nuevo.str();
+}
+#line 886 "tree.cpp"
 
 int NewLValueExpression::isA(int kind) const
 {
@@ -635,9 +911,27 @@ NewMethodCallExpression::~NewMethodCallExpression()
 }
 
 string NewMethodCallExpression::GenerarCodigo()
-#line 1862 "tree.tc"
-{return "falta";}
-#line 641 "tree.cpp"
+#line 2297 "tree.tc"
+{
+   ostringstream nuevo;
+    if(newParameters != NULL){
+       list<NewExpression *>::iterator it;
+       it = newParameters->begin();
+       int parameterCount = newParameters->size();
+       nuevo << "addi " << "$sp, $sp, " << (-1 * (parameterCount*4)) << "\n";
+       while(it != newParameters->end())
+       {   
+           NewExpression * newExpr = *it; 
+           string reg = getFreeRegister();
+           nuevo << "sw " << (newExpr->indice * 4)<<"($sp)" << "\n";
+           FreeRegister(reg);
+           it++;
+       }
+     }
+     place = "$v0";
+    return nuevo.str();
+}
+#line 935 "tree.cpp"
 
 int NewMethodCallExpression::isA(int kind) const
 {
@@ -665,9 +959,17 @@ NewConstantIntExpression::~NewConstantIntExpression()
 }
 
 string NewConstantIntExpression::GenerarCodigo()
-#line 1850 "tree.tc"
-{return "falta";}
-#line 671 "tree.cpp"
+#line 2230 "tree.tc"
+{
+   ostringstream nuevo;
+   
+   string reg = getFreeRegister();
+   nuevo << "li " << reg <<", "<< Newconstant << "\n";
+   place = reg;
+
+   return nuevo.str();
+}
+#line 973 "tree.cpp"
 
 int NewConstantIntExpression::isA(int kind) const
 {
@@ -695,9 +997,15 @@ NewConstantStringExpression::~NewConstantStringExpression()
 }
 
 string NewConstantStringExpression::GenerarCodigo()
-#line 1854 "tree.tc"
-{return "falta";}
-#line 701 "tree.cpp"
+#line 2255 "tree.tc"
+{
+    ostringstream nuevo;
+    string reg = getFreeRegister();
+    nuevo << "la "<< reg <<", "<< Newconstant << "\n"; 
+    place = reg;
+    return nuevo.str();
+}
+#line 1009 "tree.cpp"
 
 int NewConstantStringExpression::isA(int kind) const
 {
@@ -725,9 +1033,20 @@ NewConstantBoolExpression::~NewConstantBoolExpression()
 }
 
 string NewConstantBoolExpression::GenerarCodigo()
-#line 1852 "tree.tc"
-{return "falta";}
-#line 731 "tree.cpp"
+#line 2241 "tree.tc"
+{
+   ostringstream nuevo;
+   
+   string reg = getFreeRegister();
+   if(Newconstant)
+      nuevo << "li " << reg <<", 1"<<"\n";
+   else
+      nuevo << "li " << reg <<", 0"<<"\n";
+   place = reg;
+
+   return nuevo.str();
+}
+#line 1050 "tree.cpp"
 
 int NewConstantBoolExpression::isA(int kind) const
 {
@@ -755,9 +1074,9 @@ NewConstantCharExpression::~NewConstantCharExpression()
 }
 
 string NewConstantCharExpression::GenerarCodigo()
-#line 1856 "tree.tc"
-{return "falta";}
-#line 761 "tree.cpp"
+#line 2349 "tree.tc"
+{return "NADA \n";}
+#line 1080 "tree.cpp"
 
 int NewConstantCharExpression::isA(int kind) const
 {
@@ -784,22 +1103,22 @@ NewAddExpression::~NewAddExpression()
 }
 
 string NewAddExpression::GenerarCodigo()
-#line 1422 "tree.tc"
+#line 1773 "tree.tc"
 {
     string L = newfirstExpression->GenerarCodigo();
     string R = newSecondExpression->GenerarCodigo();
 
     ostringstream nuevo ;
     nuevo << L + R;
+
+    string reg = getFreeRegister();
+    nuevo << "add " << reg <<","<<newfirstExpression->place<<","<<newSecondExpression->place << "\n";
+    place = reg;
     FreeRegister(newfirstExpression->place);
     FreeRegister(newSecondExpression->place);
-    string registro = getFreeRegister();
-    nuevo << "add " << registro <<","<<newfirstExpression->place<<","<<newSecondExpression->place;
-    place = registro;
-
     return nuevo.str();
 }
-#line 803 "tree.cpp"
+#line 1122 "tree.cpp"
 
 int NewAddExpression::isA(int kind) const
 {
@@ -826,22 +1145,22 @@ NewSubExpression::~NewSubExpression()
 }
 
 string NewSubExpression::GenerarCodigo()
-#line 1438 "tree.tc"
+#line 1789 "tree.tc"
 {
     string L = newfirstExpression->GenerarCodigo();
     string R = newSecondExpression->GenerarCodigo();
 
     ostringstream nuevo;
     nuevo << L + R;
+
+    string reg = getFreeRegister();
+    nuevo << "sub "<< reg <<","<<newfirstExpression->place<<","<<newSecondExpression->place << "\n";
+    place = reg;
     FreeRegister(newfirstExpression->place);
     FreeRegister(newSecondExpression->place);
-    string registro = getFreeRegister();
-    nuevo << "sub "<< registro <<","<<newfirstExpression->place<<","<<newSecondExpression->place;
-    place = registro;
-
     return nuevo.str();
 }
-#line 845 "tree.cpp"
+#line 1164 "tree.cpp"
 
 int NewSubExpression::isA(int kind) const
 {
@@ -868,21 +1187,22 @@ NewMultExpression::~NewMultExpression()
 }
 
 string NewMultExpression::GenerarCodigo()
-#line 1454 "tree.tc"
+#line 1805 "tree.tc"
 {
     string L = newfirstExpression->GenerarCodigo();
     string R = newSecondExpression->GenerarCodigo();
 
     ostringstream nuevo;
     nuevo << L + R;
+
+    string reg = getFreeRegister();
+    nuevo << "mul "<< reg <<", "<<newfirstExpression->place<<", "<<newSecondExpression->place<<"\n";
+    place = reg;
     FreeRegister(newfirstExpression->place);
     FreeRegister(newSecondExpression->place);
-    nuevo << "mult "<< newfirstExpression->place<<","<<newSecondExpression->place;
-    place = newfirstExpression->place;
-
     return nuevo.str();
 }
-#line 886 "tree.cpp"
+#line 1206 "tree.cpp"
 
 int NewMultExpression::isA(int kind) const
 {
@@ -909,21 +1229,22 @@ NewDivExpression::~NewDivExpression()
 }
 
 string NewDivExpression::GenerarCodigo()
-#line 1469 "tree.tc"
+#line 1821 "tree.tc"
 {
     string L = newfirstExpression->GenerarCodigo();
     string R = newSecondExpression->GenerarCodigo();
 
     ostringstream nuevo;
     nuevo << L + R;
+
+    string reg = getFreeRegister();
+    nuevo << "div "<< reg <<", " <<newfirstExpression->place<<", "<<newSecondExpression->place<< "\n";
+    place = reg;
     FreeRegister(newfirstExpression->place);
     FreeRegister(newSecondExpression->place);
-    nuevo << "div "<< newfirstExpression->place<<","<<newSecondExpression->place;
-    place = newfirstExpression->place;
-
     return nuevo.str();
 }
-#line 927 "tree.cpp"
+#line 1248 "tree.cpp"
 
 int NewDivExpression::isA(int kind) const
 {
@@ -950,23 +1271,22 @@ NewLessThanExpression::~NewLessThanExpression()
 }
 
 string NewLessThanExpression::GenerarCodigo()
-#line 1484 "tree.tc"
+#line 1837 "tree.tc"
 {
     string L = newfirstExpression->GenerarCodigo();
     string R = newSecondExpression->GenerarCodigo();
 
     ostringstream nuevo;
     nuevo << L + R;
+
+    string reg = getFreeRegister();
+    nuevo << "slt "<< reg << ", "<<newfirstExpression->place<<", "<<newSecondExpression->place << "\n";
+    place = reg;
     FreeRegister(newfirstExpression->place);
     FreeRegister(newSecondExpression->place);
-    string label = "stackCurrentLabel.pop_back()";    
-    nuevo << "blt "<< newfirstExpression->place<<","<<newSecondExpression->place <<","<< label;
-
-    place = "";
-
     return nuevo.str();   
 }
-#line 970 "tree.cpp"
+#line 1290 "tree.cpp"
 
 int NewLessThanExpression::isA(int kind) const
 {
@@ -993,22 +1313,22 @@ NewLessThanEqualExpression::~NewLessThanEqualExpression()
 }
 
 string NewLessThanEqualExpression::GenerarCodigo()
-#line 1501 "tree.tc"
+#line 1853 "tree.tc"
 {
     string L = newfirstExpression->GenerarCodigo();
     string R = newSecondExpression->GenerarCodigo();
 
     ostringstream nuevo;
     nuevo << L + R;
+
+    string reg = getFreeRegister();
+    nuevo << "sle "<< reg << ", " << newfirstExpression->place<<", "<<newSecondExpression->place <<"\n";
+    place = reg;
     FreeRegister(newfirstExpression->place);
     FreeRegister(newSecondExpression->place);
-    string label = "stackCurrentLabel.pop_back()";
-    nuevo << "ble "<< newfirstExpression->place<<","<<newSecondExpression->place <<","<< label;
-    place = "";
-
     return nuevo.str();   
 }
-#line 1012 "tree.cpp"
+#line 1332 "tree.cpp"
 
 int NewLessThanEqualExpression::isA(int kind) const
 {
@@ -1035,22 +1355,22 @@ NewBigerThanExpression::~NewBigerThanExpression()
 }
 
 string NewBigerThanExpression::GenerarCodigo()
-#line 1517 "tree.tc"
+#line 1869 "tree.tc"
 {
     string L = newfirstExpression->GenerarCodigo();
     string R = newSecondExpression->GenerarCodigo();
 
     ostringstream nuevo;
     nuevo << L + R;
+
+    string reg = getFreeRegister();
+    nuevo << "slt "<< reg << ", " <<newSecondExpression->place<<", "<<newfirstExpression->place <<"\n";
+    place = reg;
     FreeRegister(newfirstExpression->place);
     FreeRegister(newSecondExpression->place);
-    string label = "stackCurrentLabel.pop_back()";
-    nuevo << "bgt "<< newfirstExpression->place<<","<<newSecondExpression->place <<","<< label;
-    place = "";
-
     return nuevo.str();   
 }
-#line 1054 "tree.cpp"
+#line 1374 "tree.cpp"
 
 int NewBigerThanExpression::isA(int kind) const
 {
@@ -1077,22 +1397,22 @@ NewBigerThanEqualExpression::~NewBigerThanEqualExpression()
 }
 
 string NewBigerThanEqualExpression::GenerarCodigo()
-#line 1533 "tree.tc"
+#line 1885 "tree.tc"
 {
     string L = newfirstExpression->GenerarCodigo();
     string R = newSecondExpression->GenerarCodigo();
 
     ostringstream nuevo;
     nuevo << L + R;
+
+    string reg = getFreeRegister();
+    nuevo << "sle "<< reg << ", "<<newSecondExpression->place<<", "<<newfirstExpression->place <<"\n";
+    place = reg;
     FreeRegister(newfirstExpression->place);
     FreeRegister(newSecondExpression->place);
-    string label =" stackCurrentLabel.pop_back()";
-    nuevo << "bge "<< newfirstExpression->place<<","<<newSecondExpression->place <<","<< label;
-    place = "";
-
     return nuevo.str();   
 }
-#line 1096 "tree.cpp"
+#line 1416 "tree.cpp"
 
 int NewBigerThanEqualExpression::isA(int kind) const
 {
@@ -1119,22 +1439,22 @@ NewEqualExpression::~NewEqualExpression()
 }
 
 string NewEqualExpression::GenerarCodigo()
-#line 1549 "tree.tc"
+#line 1901 "tree.tc"
 {
     string L = newfirstExpression->GenerarCodigo();
     string R = newSecondExpression->GenerarCodigo();
 
     ostringstream nuevo;
     nuevo << L + R;
+
+    string reg = getFreeRegister();
+    nuevo << "seq "<< reg <<", "<<newfirstExpression->place<<", "<<newSecondExpression->place <<"\n";
+    place = reg;
     FreeRegister(newfirstExpression->place);
     FreeRegister(newSecondExpression->place);
-    string label = "stackCurrentLabel.pop_back()";
-    nuevo << "beq "<< newfirstExpression->place<<","<<newSecondExpression->place <<","<< label;
-    place = "";
-
     return nuevo.str();  
 }
-#line 1138 "tree.cpp"
+#line 1458 "tree.cpp"
 
 int NewEqualExpression::isA(int kind) const
 {
@@ -1161,22 +1481,22 @@ NewNotEqualExpression::~NewNotEqualExpression()
 }
 
 string NewNotEqualExpression::GenerarCodigo()
-#line 1565 "tree.tc"
+#line 1917 "tree.tc"
 {
     string L = newfirstExpression->GenerarCodigo();
     string R = newSecondExpression->GenerarCodigo();
 
     ostringstream nuevo ;
     nuevo << L + R;
+
+    string reg = getFreeRegister();
+    nuevo << "sne "<< reg <<", "<<newfirstExpression->place<<", "<<newSecondExpression->place<<"\n";
+    place = reg;
     FreeRegister(newfirstExpression->place);
     FreeRegister(newSecondExpression->place);
-    string label = "stackCurrentLabel.pop_back()";
-    nuevo << "bne "<< newfirstExpression->place<<","<<newSecondExpression->place<<","<<label;
-    place = "";
-
     return nuevo.str();
 }
-#line 1180 "tree.cpp"
+#line 1500 "tree.cpp"
 
 int NewNotEqualExpression::isA(int kind) const
 {
@@ -1203,22 +1523,22 @@ NewShiftRightExpression::~NewShiftRightExpression()
 }
 
 string NewShiftRightExpression::GenerarCodigo()
-#line 1581 "tree.tc"
+#line 1933 "tree.tc"
 {
     string L = newfirstExpression->GenerarCodigo();
     string R = newSecondExpression->GenerarCodigo();
 
     ostringstream nuevo;
     nuevo << L + R;
+
+    string reg = getFreeRegister();
+    nuevo << "srlv "<< reg <<", "<< newfirstExpression->place<<", "<<newSecondExpression->place<<"\n";
+    place = reg;
     FreeRegister(newfirstExpression->place);
     FreeRegister(newSecondExpression->place);
-    string registro = getFreeRegister();
-    nuevo << "srl "<< registro << newfirstExpression->place<<","<<newSecondExpression->place;
-    place = registro;
-
     return nuevo.str();
 }
-#line 1222 "tree.cpp"
+#line 1542 "tree.cpp"
 
 int NewShiftRightExpression::isA(int kind) const
 {
@@ -1245,22 +1565,22 @@ NewShiftLeftExpression::~NewShiftLeftExpression()
 }
 
 string NewShiftLeftExpression::GenerarCodigo()
-#line 1597 "tree.tc"
+#line 1949 "tree.tc"
 {
     string L = newfirstExpression->GenerarCodigo();
     string R = newSecondExpression->GenerarCodigo();
 
     ostringstream nuevo;
     nuevo << L + R;
+
+    string reg = getFreeRegister();
+    nuevo << "sllv "<< reg <<", "<< newfirstExpression->place<<", "<<newSecondExpression->place << "\n";
+    place = reg;
     FreeRegister(newfirstExpression->place);
     FreeRegister(newSecondExpression->place);
-    string registro = getFreeRegister();
-    nuevo << "sll "<< registro << newfirstExpression->place<<","<<newSecondExpression->place;
-    place = registro;
-
     return nuevo.str();
 }
-#line 1264 "tree.cpp"
+#line 1584 "tree.cpp"
 
 int NewShiftLeftExpression::isA(int kind) const
 {
@@ -1287,22 +1607,22 @@ NewRotExpression::~NewRotExpression()
 }
 
 string NewRotExpression::GenerarCodigo()
-#line 1613 "tree.tc"
+#line 1965 "tree.tc"
 {
     string L = newfirstExpression->GenerarCodigo();
     string R = newSecondExpression->GenerarCodigo();
 
     ostringstream nuevo;
     nuevo << L + R;
+
+    string reg = getFreeRegister();
+    nuevo << "ror "<< reg <<", "<< newfirstExpression->place<<", "<<newSecondExpression->place<<"\n";
+    place = reg;
     FreeRegister(newfirstExpression->place);
     FreeRegister(newSecondExpression->place);
-    string registro = getFreeRegister();
-    nuevo << "rot "<< registro << newfirstExpression->place<<","<<newSecondExpression->place;
-    place = registro;
-
     return nuevo.str();
 }
-#line 1306 "tree.cpp"
+#line 1626 "tree.cpp"
 
 int NewRotExpression::isA(int kind) const
 {
@@ -1329,22 +1649,22 @@ NewOrExpression::~NewOrExpression()
 }
 
 string NewOrExpression::GenerarCodigo()
-#line 1629 "tree.tc"
+#line 1981 "tree.tc"
 {
     string L = newfirstExpression->GenerarCodigo();
     string R = newSecondExpression->GenerarCodigo();
 
     ostringstream nuevo;
     nuevo << L + R;
-    FreeRegister(newfirstExpression->place);
-    FreeRegister(newSecondExpression->place);
-    string registro = getFreeRegister();
-    nuevo << "or "<< registro << newfirstExpression->place<<","<<newSecondExpression->place;
-    place = registro;
+    //FreeRegister(newfirstExpression->place);
+    //FreeRegister(newSecondExpression->place);
+    string reg = "";//= getFreeRegister();
+    nuevo << "or "<< reg <<", "<< newfirstExpression->place<<", "<<newSecondExpression->place<<"\n";
+    place = reg;
 
     return nuevo.str();
 }
-#line 1348 "tree.cpp"
+#line 1668 "tree.cpp"
 
 int NewOrExpression::isA(int kind) const
 {
@@ -1371,22 +1691,22 @@ NewAndExpression::~NewAndExpression()
 }
 
 string NewAndExpression::GenerarCodigo()
-#line 1645 "tree.tc"
+#line 1997 "tree.tc"
 {
     string L = newfirstExpression->GenerarCodigo();
     string R = newSecondExpression->GenerarCodigo();
 
     ostringstream nuevo;
     nuevo << L + R;
-    FreeRegister(newfirstExpression->place);
-    FreeRegister(newSecondExpression->place);
-    string registro = getFreeRegister();
-    nuevo << "and "<< registro << newfirstExpression->place<<","<<newSecondExpression->place;
+    //FreeRegister(newfirstExpression->place);
+    //FreeRegister(newSecondExpression->place);
+    string registro = "";// = getFreeRegister();
+    nuevo << "and "<< registro << newfirstExpression->place<<","<<newSecondExpression->place <<"\n";
     place = registro;
 
     return nuevo.str();
 }
-#line 1390 "tree.cpp"
+#line 1710 "tree.cpp"
 
 int NewAndExpression::isA(int kind) const
 {
@@ -1413,22 +1733,23 @@ NewModExpression::~NewModExpression()
 }
 
 string NewModExpression::GenerarCodigo()
-#line 1677 "tree.tc"
+#line 2028 "tree.tc"
 {
     string L = newfirstExpression->GenerarCodigo();
     string R = newSecondExpression->GenerarCodigo();
 
     ostringstream nuevo;
     nuevo << L + R;
+
+    string reg = getFreeRegister();
+    nuevo << "rem "<<reg<<", "<< newfirstExpression->place<<", "<<newSecondExpression->place<<"\n";
+    place = reg;
+
     FreeRegister(newfirstExpression->place);
     FreeRegister(newSecondExpression->place);
-    string registro = getFreeRegister();
-    nuevo << " "<< registro << newfirstExpression->place<<","<<newSecondExpression->place;
-    place = registro;
-
     return nuevo.str();
 }
-#line 1432 "tree.cpp"
+#line 1753 "tree.cpp"
 
 int NewModExpression::isA(int kind) const
 {
@@ -1455,20 +1776,21 @@ NewNotExpression::~NewNotExpression()
 }
 
 string NewNotExpression::GenerarCodigo()
-#line 1662 "tree.tc"
+#line 2013 "tree.tc"
 {
     string L = newfirstExpression->GenerarCodigo();
 
     ostringstream nuevo;
     nuevo << L ;
-    FreeRegister(newfirstExpression->place);
-    string registro = getFreeRegister();
-    nuevo << " "<< registro << newfirstExpression->place;;
-    place = registro;
+    
+    string reg = getFreeRegister();
+    nuevo << "seq " << reg <<", "<<"$zero, "<< newfirstExpression->place << "\n";
+    place = reg;
 
+    FreeRegister(newfirstExpression->place);
     return nuevo.str();
 }
-#line 1472 "tree.cpp"
+#line 1794 "tree.cpp"
 
 int NewNotExpression::isA(int kind) const
 {
@@ -1498,37 +1820,36 @@ NewIfStatement::~NewIfStatement()
 }
 
 string NewIfStatement::GenerarCodigo()
-#line 1695 "tree.tc"
+#line 2047 "tree.tc"
 {
     string labelIf = getLabel("if");
     string labelElse = getLabel("else");
     string labelEndIf = getLabel("endIf");
-    
-    //no se si lo de arriba o esto
-    stackCurrentLabel.push_back(labelIf);
 
+    bool elseStatement = (newStatementFalse != NULL); 
     string condition = newCondition->GenerarCodigo();
-    ostringstream nuevo;
-    nuevo << condition;
+    string newTrueBlock = newStatementTrue->GenerarCodigo();
+    string newFalseBlock;
+    if(elseStatement)
+        newFalseBlock = newStatementFalse->GenerarCodigo();
     
-    if(newStatementFalse != NULL)
-        nuevo << "j " << labelElse;
-    else
-        nuevo << "j " << labelEndIf;
-
-    nuevo << labelIf << " :";
-    nuevo << newStatementTrue->GenerarCodigo();
-
-    if(newStatementFalse != NULL)
-    {
-        nuevo << labelElse << " :";
-        nuevo << newStatementFalse->GenerarCodigo();
+    ostringstream nuevo;
+    nuevo << condition << "\n";
+    if(elseStatement)
+        nuevo << "beq " << newCondition->place <<", "<< "$zero, " << labelElse << "\n";
+    else 
+        nuevo << "beq " << newCondition->place <<", "<< "$zero, " << labelEndIf << "\n";
+    nuevo << newTrueBlock << "\n";
+    if(elseStatement){
+        nuevo <<"j "<< labelEndIf << endl;
+        nuevo << labelElse << ": \n";
+        nuevo << newFalseBlock  << "\n";
     }
+    nuevo << labelEndIf << ": \n";
 
-    nuevo << labelEndIf << " :";
     return nuevo.str();
 }
-#line 1532 "tree.cpp"
+#line 1853 "tree.cpp"
 
 int NewIfStatement::isA(int kind) const
 {
@@ -1557,28 +1878,33 @@ NewWhileStatement::~NewWhileStatement()
 }
 
 string NewWhileStatement::GenerarCodigo()
-#line 1726 "tree.tc"
+#line 2077 "tree.tc"
 {
+    cout << "entro << NewWhileStatement"<<endl;
     string labelStartWhile = getLabel("startWhile");
     string labelWhile = getLabel("while");
     string labelEndWhile = getLabel("endWhile");
+    stackCurrentLabelBreak.push_back(labelEndWhile);
+    stackCurrentLabelContinue.push_back(labelStartWhile);
 
-    stackCurrentLabel.push_back(labelWhile);
     string condition = newCondition->GenerarCodigo();
+    string stmTrue = newStatementTrue->GenerarCodigo();
     
     ostringstream nuevo;
-    nuevo << labelStartWhile << " :";
+    nuevo << labelStartWhile << ": \n";
     nuevo << condition;
-    nuevo << "j " << labelEndWhile;
+    nuevo << "beq " << newCondition->place <<", "<< "$zero, " << labelEndWhile << "\n";
+    nuevo << stmTrue;
+    nuevo << "j "<< labelStartWhile << "\n";
+    nuevo << labelEndWhile << ": \n";
 
-    nuevo << labelWhile << " :";
-    nuevo << newStatementTrue->GenerarCodigo();
-    nuevo << "j " << labelStartWhile; 
+    stackCurrentLabelContinue.pop_back();
+    stackCurrentLabelBreak.pop_back();
+    FreeRegister(newCondition->place);
 
-    nuevo << labelEndWhile << " :";
     return nuevo.str();
 }
-#line 1582 "tree.cpp"
+#line 1908 "tree.cpp"
 
 int NewWhileStatement::isA(int kind) const
 {
@@ -1609,34 +1935,40 @@ NewForStatement::~NewForStatement()
 }
 
 string NewForStatement::GenerarCodigo()
-#line 1748 "tree.tc"
+#line 2104 "tree.tc"
 {
+
     string labelStartFor = getLabel("startFor");
     string labelfor = getLabel("for");
-    string labelEndfor = getLabel("endfor");
+    string labelEndfor = getLabel("endFor");
+    string continuePoint = getLabel("continuePoint");
 
-    stackCurrentLabel.push_back(labelfor);
+    stackCurrentLabelBreak.push_back(labelEndfor);
+    stackCurrentLabelContinue.push_back(continuePoint);
 
     string firstListAssign = newFirstListAssign->GenerarCodigo();
     string lastListAssign = newLastListAssign->GenerarCodigo();
-
-    ostringstream nuevo;
-    nuevo << firstListAssign;
-    nuevo << lastListAssign;
     string condition = newCondition->GenerarCodigo();
+    string newTrueBlock = newStatementTrue->GenerarCodigo();
+    ostringstream nuevo;
 
-    nuevo << labelStartFor << " :";
+    nuevo << firstListAssign;
+    nuevo << labelStartFor << ": \n";
     nuevo << condition;
-    nuevo << "j " << labelEndfor;
+    nuevo << "beq " << newCondition->place <<", " << "$zero, " << labelEndfor << "\n";
+    nuevo << newTrueBlock;
+    nuevo << continuePoint << ": \n"; 
+    nuevo << lastListAssign;
+    nuevo << "j " << labelStartFor << "\n"; 
+    nuevo << labelEndfor << ": \n";
 
-    nuevo << labelfor << " :";
-    nuevo << newStatementTrue->GenerarCodigo();
-    nuevo << "j " << labelStartFor; 
+    stackCurrentLabelContinue.pop_back();
+    stackCurrentLabelBreak.pop_back();
+    FreeRegister(newCondition->place);
 
-    nuevo << labelEndfor << " :";
     return nuevo.str();
 }
-#line 1640 "tree.cpp"
+#line 1972 "tree.cpp"
 
 int NewForStatement::isA(int kind) const
 {
@@ -1665,11 +1997,21 @@ NewAssignStatement::~NewAssignStatement()
 }
 
 string NewAssignStatement::GenerarCodigo()
-#line 1776 "tree.tc"
+#line 2138 "tree.tc"
 {
+    ostringstream nuevo;
+    string leftValue = ((NewLValueExpression*)newLeftValue)->GetDirLValue();
+    string value = newValue->GenerarCodigo();
 
+    nuevo << leftValue;
+    nuevo << value;
+    nuevo << "sw "<< newValue->place <<", 0("<< newLeftValue->place << ")\n";
+
+    FreeRegister(newLeftValue->place);
+    FreeRegister(newValue->place);
+    return nuevo.str();
 }
-#line 1673 "tree.cpp"
+#line 2015 "tree.cpp"
 
 int NewAssignStatement::isA(int kind) const
 {
@@ -1697,7 +2039,7 @@ NewReadStatement::~NewReadStatement()
 }
 
 string NewReadStatement::GenerarCodigo()
-#line 1836 "tree.tc"
+#line 2215 "tree.tc"
 {
     ostringstream nuevo;
     list<NewExpression *>::iterator it;
@@ -1711,7 +2053,7 @@ string NewReadStatement::GenerarCodigo()
 
     return nuevo.str();
 }
-#line 1715 "tree.cpp"
+#line 2057 "tree.cpp"
 
 int NewReadStatement::isA(int kind) const
 {
@@ -1739,33 +2081,35 @@ NewPrintStatement::~NewPrintStatement()
 }
 
 string NewPrintStatement::GenerarCodigo()
-#line 1809 "tree.tc"
+#line 2186 "tree.tc"
 {
-    /*ostringstream nuevo;
+    ostringstream nuevo;
     list<NewExpression *>::iterator it;
     it = newListExpression->begin();
     while(it != newListExpression->end())
     { 
         NewExpression *expr = *it;
         nuevo << expr->GenerarCodigo();
-        if(expr->type == Type.Int)
+        if(expr->type == Int)
         {
-            nuevo << "li " << "$v0" <<","<< "1";
-            nuevo << "move " << "$a0" << expr->place;
-            nuevo << "syscall";
+            nuevo << "li " << "$v0" <<", "<< "1 \n";
+            nuevo << "move " << "$a0"<<", " << expr->place << "\n";
+            nuevo << "syscall \n";
         }
-        else if(expr->type == Type.String)
+        else if(expr->type == String)
         {
-            nuevo << "li " << "$v0" <<","<< "4";
-            nuevo << "move " << "$a0" <<","<< expr->place;
-            nuevo << "syscall";
+            nuevo << "li " << "$v0" <<", "<< "4 \n";
+            nuevo << "move " << "$a0" <<", "<< expr->place <<"\n";
+            nuevo << "syscall \n";
         }
-    }*/
 
-    //return nuevo.str();
-    return "falta";
+        FreeRegister(expr->place);
+        it++;
+    }
+
+    return nuevo.str();
 }
-#line 1769 "tree.cpp"
+#line 2113 "tree.cpp"
 
 int NewPrintStatement::isA(int kind) const
 {
@@ -1786,6 +2130,7 @@ NewMethodCallStatement::NewMethodCallStatement(string id, NewExpressionList * ne
 	this->kind__ = NewMethodCallStatement_kind;
 	this->id = id;
 	this->newParameters = newParameters;
+	this->indexLevel = 0;
 }
 
 NewMethodCallStatement::~NewMethodCallStatement()
@@ -1794,25 +2139,30 @@ NewMethodCallStatement::~NewMethodCallStatement()
 }
 
 string NewMethodCallStatement::GenerarCodigo()
-#line 1781 "tree.tc"
+#line 2153 "tree.tc"
 {
-    ostringstream nuevo ;
-    list<NewExpression *>::iterator it;
-    it = newParameters->begin();
-    int parameterCount = newParameters->size();
-    nuevo << "addi " << "$sp" << (-1 * parameterCount);
-    int parameterPosition = 0;
-    while(it != newParameters->end())
-    {   
-        nuevo << (*it)->GenerarCodigo();
-        nuevo << "sw " << "("<< (parameterPosition * 4)<<")$sp"<< "," ;
-        it++;
-    }
-
-    nuevo << "jal " + id;
+   cout << "entro <<NewMethodCallStatement"<<endl;
+    ostringstream nuevo;
+    if(newParameters != NULL){
+       list<NewExpression *>::iterator it;
+       it = newParameters->begin();
+       int parameterCount = newParameters->size();
+       nuevo << "addi " << "$sp, $sp, " << (-1 * (parameterCount*4)) << "\n";
+       while(it != newParameters->end())
+       {   
+           NewExpression * newExpr = *it;
+           nuevo << newExpr->GenerarCodigo(); 
+           string reg = getFreeRegister();
+           nuevo << "sw " << newExpr->place << ", "<<(newExpr->indice * 4)<<"($sp)"<< "\n";
+           FreeRegister(reg);
+           it++;
+       }
+     }
+     cout << "salio <<NewMethodCallStatement"<<endl;
+    nuevo << "jal " << id << "\n";
     return nuevo.str();
 }
-#line 1816 "tree.cpp"
+#line 2166 "tree.cpp"
 
 int NewMethodCallStatement::isA(int kind) const
 {
@@ -1840,15 +2190,15 @@ NewReturnStatement::~NewReturnStatement()
 }
 
 string NewReturnStatement::GenerarCodigo()
-#line 1800 "tree.tc"
+#line 2177 "tree.tc"
 {
     ostringstream nuevo;
     nuevo << newReturnExpression->GenerarCodigo();
-    nuevo << "move "<< "$v0" <<" , "<< newReturnExpression->place; 
-    nuevo << "jr " << "$ra";
+    nuevo << "move "<< "$v0" <<" , "<< newReturnExpression->place << "\n"; 
+    nuevo << "jr " << "$ra" << "\n";
     return nuevo.str();
 }
-#line 1852 "tree.cpp"
+#line 2202 "tree.cpp"
 
 int NewReturnStatement::isA(int kind) const
 {
@@ -1875,9 +2225,14 @@ NewBreakStatement::~NewBreakStatement()
 }
 
 string NewBreakStatement::GenerarCodigo()
-#line 1864 "tree.tc"
-{return "falta";}
-#line 1881 "tree.cpp"
+#line 2318 "tree.tc"
+{
+   ostringstream nuevo;
+   string label = stackCurrentLabelBreak.back();
+   nuevo << "j "<< label<< "\n";
+   return nuevo.str();
+}
+#line 2236 "tree.cpp"
 
 int NewBreakStatement::isA(int kind) const
 {
@@ -1904,9 +2259,14 @@ NewContinueStatement::~NewContinueStatement()
 }
 
 string NewContinueStatement::GenerarCodigo()
-#line 1866 "tree.tc"
-{return "falta";}
-#line 1910 "tree.cpp"
+#line 2326 "tree.tc"
+{
+   ostringstream nuevo;
+   string label = stackCurrentLabelContinue.back();
+   nuevo << "j "<< label<< "\n";
+   return nuevo.str();  
+}
+#line 2270 "tree.cpp"
 
 int NewContinueStatement::isA(int kind) const
 {
@@ -1933,9 +2293,21 @@ NewBlockStatement::~NewBlockStatement()
 }
 
 string NewBlockStatement::GenerarCodigo()
-#line 1868 "tree.tc"
-{return "falta";}
-#line 1939 "tree.cpp"
+#line 2334 "tree.tc"
+{
+   cout << "entro <<NewBlockStatement"<<endl;
+    ostringstream nuevo;
+    list<NewStatement*>::iterator it;
+    it = newListStatements->begin();
+    while(it != newListStatements->end()) {
+        NewStatement *stm = (*it);
+        nuevo << stm->GenerarCodigo();
+        it++;
+    }
+    cout << "salio <<NewBlockStatement"<<endl;
+    return nuevo.str();
+}
+#line 2311 "tree.cpp"
 
 int NewBlockStatement::isA(int kind) const
 {
@@ -2048,7 +2420,7 @@ ClassDef::~ClassDef()
 }
 
 string ClassDef::ToString()
-#line 673 "tree.tc"
+#line 850 "tree.tc"
 {
   ostringstream out;
   out << "class " << className << "{" << endl; 
@@ -2059,10 +2431,10 @@ string ClassDef::ToString()
   out << "}";
   return out.str(); 
 }
-#line 2063 "tree.cpp"
+#line 2435 "tree.cpp"
 
 TheNewClass * ClassDef::ValidarSemantica()
-#line 687 "tree.tc"
+#line 864 "tree.tc"
 {
     contextos[0] = new Contexto();
     list<VariableDef*>::iterator it1;
@@ -2073,17 +2445,22 @@ TheNewClass * ClassDef::ValidarSemantica()
         it1++;
     }
 
+    NewBlockStatement *newBlockStatement = NULL;
     list<MethodDef*>::iterator it2;
     it2 = listMethod->begin();
     while(it2 != listMethod->end())
     {
         (*it2)->ValidarSemantica();
+        if((*it2)->id == "main")
+            newBlockStatement = (NewBlockStatement*)(*it2)->block->ValidarSemantica();
+         else
+            (*it2)->block->ValidarSemantica();
         it2++;
     }
     
-    return new NewClassDef(className,NULL);
+    return new NewClassDef(className,newBlockStatement);
 }
-#line 2087 "tree.cpp"
+#line 2464 "tree.cpp"
 
 int ClassDef::isA(int kind) const
 {
@@ -2187,7 +2564,7 @@ MethodCallExpression::~MethodCallExpression()
 }
 
 string MethodCallExpression::ToString()
-#line 400 "tree.tc"
+#line 573 "tree.tc"
 {
     ostringstream out;
 
@@ -2195,25 +2572,25 @@ string MethodCallExpression::ToString()
 
     return out.str();
 }
-#line 2199 "tree.cpp"
+#line 2576 "tree.cpp"
 
 TheNewClass * MethodCallExpression::ValidarSemantica()
-#line 1019 "tree.tc"
+#line 1235 "tree.tc"
 {
-    cout<<"entro aqui en MethodCallExpression";
+    cout << "Entro MethodCallExpression" << endl;
     list<NewExpression*> *newListExpression = new list<NewExpression*>();
     list<Expression*>::iterator it;
     it = parameters->begin();
     while(it != parameters->end())
     {
         NewExpression * newExpr = (NewExpression*)((*it)->ValidarSemantica());
-        cout<<"entro aqui en los parametros";
         newListExpression->push_back(newExpr);
         it++;
     }
+    cout << "Salio MethodCallExpression" << endl;
     return new NewMethodCallExpression(id,newListExpression);
 }
-#line 2217 "tree.cpp"
+#line 2594 "tree.cpp"
 
 int MethodCallExpression::isA(int kind) const
 {
@@ -2242,7 +2619,7 @@ LValueExpression::~LValueExpression()
 }
 
 string LValueExpression::ToString()
-#line 538 "tree.tc"
+#line 711 "tree.tc"
 {
     ostringstream out;
 
@@ -2253,34 +2630,62 @@ string LValueExpression::ToString()
 
     return out.str();
 }
-#line 2257 "tree.cpp"
+#line 2634 "tree.cpp"
 
 TheNewClass * LValueExpression::ValidarSemantica()
-#line 1035 "tree.tc"
+#line 1251 "tree.tc"
 {
+    cout << "Entro LValueExpression" << endl;
     NewExpression *newExpr = NULL;
-    if(expr != NULL){
-        newExpr = (NewExpression*)(expr->ValidarSemantica());
-    }
-    if(newExpr == NULL && expr != NULL)
+    NewLValueExpression *nlv = new NewLValueExpression("",NULL,0,0);
+    
+    Contexto *con = contextos[0];
+    if(con->contextoMap[id] != NULL)
     {
-        string msj = "Error en valor asignado";
-        ErrorSemantico(msj);
-        return NULL;
-    } 
+        nlv->isLocal = true;
+    }
+    else if(variableDeclared[id] != NULL)
+    {
+        nlv->isGlobal = true;
+    }
     else
     {
-        if(newExpr!= NULL && newExpr->type != Int && newExpr->type != Boolean)
+        nlv->isParameter = true;
+    }
+
+    cout << "Salio LValueExpression" << endl;
+    int offset = 0;
+    int level = 0;
+    Contexto *cont = contextos[0];
+    map<string,Variable*>::iterator itva;
+    itva = cont->contextoMap.begin();
+    while(itva != cont->contextoMap.end()) {
+      cout << itva->first;
+      itva++;
+    }
+    if(cont->contextoMap[id] == NULL){
+        if(variableDeclared[id] ==NULL ){
+            ErrorSemantico("variable no definida");
+            return NULL;
+        }
+        else
         {
-            string msj = "Valor no asignable";
-            ErrorSemantico(msj);
-            return  NULL;
+            offset = variableDeclared[id]->offset;
+            level = variableDeclared[id]->level;
         }
     }
-    Contexto *cont = contextos[currentContexto];
-    return new NewLValueExpression(id,newExpr,cont->currentOffset,cont->currentLevel);
+    else
+    {
+        offset = cont->contextoMap[id]->offset;
+        level = cont->contextoMap[id]->level;
+    }
+    nlv->newId = id;
+    nlv->newExpr = newExpr;
+    nlv->offset = offset;
+    nlv->level = level;
+    return nlv;
 }
-#line 2284 "tree.cpp"
+#line 2689 "tree.cpp"
 
 int LValueExpression::isA(int kind) const
 {
@@ -2309,20 +2714,20 @@ ParameterDef::~ParameterDef()
 }
 
 string ParameterDef::ToString()
-#line 550 "tree.tc"
+#line 723 "tree.tc"
 {
     ostringstream out;    
     out << TypeToString(parameterType) << " " << id; 
     return out.str();
 }
-#line 2319 "tree.cpp"
+#line 2724 "tree.cpp"
 
 TheNewClass * ParameterDef::ValidarSemantica()
-#line 1014 "tree.tc"
+#line 1230 "tree.tc"
 {
     return new NewParameterDef(id,parameterType);
 }
-#line 2326 "tree.cpp"
+#line 2731 "tree.cpp"
 
 int ParameterDef::isA(int kind) const
 {
@@ -2349,16 +2754,16 @@ AddExpression::~AddExpression()
 }
 
 string AddExpression::ToString()
-#line 408 "tree.tc"
+#line 581 "tree.tc"
 {
     ostringstream out;
     out << this->firstExpression->ToString() << "+" << this->secondExpression->ToString();
     return out.str();
 }
-#line 2359 "tree.cpp"
+#line 2764 "tree.cpp"
 
 TheNewClass * AddExpression::ValidarSemantica()
-#line 709 "tree.tc"
+#line 891 "tree.tc"
 {
     NewExpression *first = (NewExpression*)firstExpression->ValidarSemantica();
     NewExpression *second = (NewExpression*)secondExpression->ValidarSemantica();
@@ -2367,7 +2772,9 @@ TheNewClass * AddExpression::ValidarSemantica()
     {
         if((first->type == second->type) && (first->type == Int))
         {
-            return new NewAddExpression(first,second);
+            NewAddExpression *addExpr = new NewAddExpression(first,second);
+            addExpr->type = Int;
+            return addExpr;
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -2375,7 +2782,7 @@ TheNewClass * AddExpression::ValidarSemantica()
     ErrorSemantico("Error: No se pudo Evaluar la Expresion");
     return NULL;
 }
-#line 2379 "tree.cpp"
+#line 2786 "tree.cpp"
 
 int AddExpression::isA(int kind) const
 {
@@ -2402,16 +2809,16 @@ SubExpression::~SubExpression()
 }
 
 string SubExpression::ToString()
-#line 414 "tree.tc"
+#line 587 "tree.tc"
 {
     ostringstream out;
     out << this->firstExpression->ToString() << "-" << this->secondExpression->ToString();
     return out.str();
 }
-#line 2412 "tree.cpp"
+#line 2819 "tree.cpp"
 
 TheNewClass * SubExpression::ValidarSemantica()
-#line 727 "tree.tc"
+#line 911 "tree.tc"
 {
     NewExpression *first = (NewExpression*)firstExpression->ValidarSemantica();
     NewExpression *second = (NewExpression*)secondExpression->ValidarSemantica();
@@ -2420,7 +2827,9 @@ TheNewClass * SubExpression::ValidarSemantica()
     {
         if((first->type == second->type) && first->type == Int)
         {
-            return new NewSubExpression(first,second);
+            NewSubExpression *subExpr = new NewSubExpression(first,second);
+            subExpr->type = Int;
+            return subExpr;
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -2428,7 +2837,7 @@ TheNewClass * SubExpression::ValidarSemantica()
     ErrorSemantico("Error: No se pudo Evaluar la Expresion");
     return NULL;
 }
-#line 2432 "tree.cpp"
+#line 2841 "tree.cpp"
 
 int SubExpression::isA(int kind) const
 {
@@ -2455,16 +2864,16 @@ MultExpression::~MultExpression()
 }
 
 string MultExpression::ToString()
-#line 420 "tree.tc"
+#line 593 "tree.tc"
 {
     ostringstream out;
     out << this->firstExpression->ToString() << "*" << this->secondExpression->ToString();
     return out.str();
 }
-#line 2465 "tree.cpp"
+#line 2874 "tree.cpp"
 
 TheNewClass * MultExpression::ValidarSemantica()
-#line 745 "tree.tc"
+#line 931 "tree.tc"
 {
     NewExpression *first = (NewExpression*)firstExpression->ValidarSemantica();
     NewExpression *second = (NewExpression*)secondExpression->ValidarSemantica();
@@ -2473,7 +2882,9 @@ TheNewClass * MultExpression::ValidarSemantica()
     {
         if((first->type == second->type) && first->type == Int)
         {
-            return new NewMultExpression(first,second);
+            NewMultExpression *multExpr = new NewMultExpression(first,second);
+            multExpr->type = Int;
+            return multExpr;
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -2481,7 +2892,7 @@ TheNewClass * MultExpression::ValidarSemantica()
     ErrorSemantico("Error: No se pudo Evaluar la Expresion");
     return NULL;
 }
-#line 2485 "tree.cpp"
+#line 2896 "tree.cpp"
 
 int MultExpression::isA(int kind) const
 {
@@ -2508,16 +2919,16 @@ DivExpression::~DivExpression()
 }
 
 string DivExpression::ToString()
-#line 426 "tree.tc"
+#line 599 "tree.tc"
 {
     ostringstream out;
     out << this->firstExpression->ToString() << "/" << this->secondExpression->ToString();
     return out.str();
 }
-#line 2518 "tree.cpp"
+#line 2929 "tree.cpp"
 
 TheNewClass * DivExpression::ValidarSemantica()
-#line 763 "tree.tc"
+#line 951 "tree.tc"
 {
     NewExpression *first = (NewExpression*)firstExpression->ValidarSemantica();
     NewExpression *second = (NewExpression*)secondExpression->ValidarSemantica();
@@ -2526,7 +2937,9 @@ TheNewClass * DivExpression::ValidarSemantica()
     {
         if((first->type == second->type) && first->type == Int)
         {
-            return new NewDivExpression(first,second);
+            NewDivExpression *divExpr = new NewDivExpression(first,second);
+            divExpr->type = Int;
+            return divExpr;
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -2534,7 +2947,7 @@ TheNewClass * DivExpression::ValidarSemantica()
     ErrorSemantico("Error: No se pudo Evaluar la Expresion");
     return NULL;
 }
-#line 2538 "tree.cpp"
+#line 2951 "tree.cpp"
 
 int DivExpression::isA(int kind) const
 {
@@ -2561,16 +2974,16 @@ LessThanExpression::~LessThanExpression()
 }
 
 string LessThanExpression::ToString()
-#line 432 "tree.tc"
+#line 605 "tree.tc"
 {
     ostringstream out;
     out << this->firstExpression->ToString() << "<" << this->secondExpression->ToString();
     return out.str();
 }
-#line 2571 "tree.cpp"
+#line 2984 "tree.cpp"
 
 TheNewClass * LessThanExpression::ValidarSemantica()
-#line 781 "tree.tc"
+#line 971 "tree.tc"
 {
     NewExpression *first = (NewExpression*)firstExpression->ValidarSemantica();
     NewExpression *second = (NewExpression*)secondExpression->ValidarSemantica();
@@ -2579,7 +2992,9 @@ TheNewClass * LessThanExpression::ValidarSemantica()
     {
         if((first->type == second->type) && first->type == Int)
         {
-            return new NewLessThanExpression(first,second);
+            NewLessThanExpression *lessThanExpr = new NewLessThanExpression(first,second); 
+            lessThanExpr->type = Boolean;
+            return lessThanExpr;
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -2587,7 +3002,7 @@ TheNewClass * LessThanExpression::ValidarSemantica()
     ErrorSemantico("Error: No se pudo Evaluar la Expresion");
     return NULL;
 }
-#line 2591 "tree.cpp"
+#line 3006 "tree.cpp"
 
 int LessThanExpression::isA(int kind) const
 {
@@ -2614,16 +3029,16 @@ LessThanEqualExpression::~LessThanEqualExpression()
 }
 
 string LessThanEqualExpression::ToString()
-#line 438 "tree.tc"
+#line 611 "tree.tc"
 {
     ostringstream out;
     out << this->firstExpression->ToString() << "<=" << this->secondExpression->ToString();
     return out.str();
 }
-#line 2624 "tree.cpp"
+#line 3039 "tree.cpp"
 
 TheNewClass * LessThanEqualExpression::ValidarSemantica()
-#line 817 "tree.tc"
+#line 1011 "tree.tc"
 {
     NewExpression *first = (NewExpression*)firstExpression->ValidarSemantica();
     NewExpression *second = (NewExpression*)secondExpression->ValidarSemantica();
@@ -2632,7 +3047,9 @@ TheNewClass * LessThanEqualExpression::ValidarSemantica()
     {
         if((first->type == second->type) && first->type == Int)
         {
-            return new NewLessThanEqualExpression(first,second);
+            NewLessThanEqualExpression *lessThanEqualExpr = new NewLessThanEqualExpression(first,second);
+            lessThanEqualExpr->type = Boolean;
+            return lessThanEqualExpr;
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -2640,7 +3057,7 @@ TheNewClass * LessThanEqualExpression::ValidarSemantica()
     ErrorSemantico("Error: No se pudo Evaluar la Expresion");
     return NULL;
 }
-#line 2644 "tree.cpp"
+#line 3061 "tree.cpp"
 
 int LessThanEqualExpression::isA(int kind) const
 {
@@ -2667,16 +3084,16 @@ BigerThanExpression::~BigerThanExpression()
 }
 
 string BigerThanExpression::ToString()
-#line 444 "tree.tc"
+#line 617 "tree.tc"
 {
     ostringstream out;
     out << this->firstExpression->ToString() << ">" << this->secondExpression->ToString();
     return out.str();
 }
-#line 2677 "tree.cpp"
+#line 3094 "tree.cpp"
 
 TheNewClass * BigerThanExpression::ValidarSemantica()
-#line 799 "tree.tc"
+#line 991 "tree.tc"
 {
     NewExpression *first = (NewExpression*)firstExpression->ValidarSemantica();
     NewExpression *second = (NewExpression*)secondExpression->ValidarSemantica();
@@ -2685,7 +3102,9 @@ TheNewClass * BigerThanExpression::ValidarSemantica()
     {
         if((first->type == second->type) && first->type == Int)
         {
-            return new NewBigerThanExpression(first,second);
+            NewBigerThanExpression *bigerThanExpr = new NewBigerThanExpression(first,second);
+            bigerThanExpr->type = Boolean;
+            return bigerThanExpr;
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -2693,7 +3112,7 @@ TheNewClass * BigerThanExpression::ValidarSemantica()
     ErrorSemantico("Error: No se pudo Evaluar la Expresion");
     return NULL;
 }
-#line 2697 "tree.cpp"
+#line 3116 "tree.cpp"
 
 int BigerThanExpression::isA(int kind) const
 {
@@ -2720,16 +3139,16 @@ BigerThanEqualExpression::~BigerThanEqualExpression()
 }
 
 string BigerThanEqualExpression::ToString()
-#line 450 "tree.tc"
+#line 623 "tree.tc"
 {
     ostringstream out;
     out << this->firstExpression->ToString() << ">=" << this->secondExpression->ToString();
     return out.str();
 }
-#line 2730 "tree.cpp"
+#line 3149 "tree.cpp"
 
 TheNewClass * BigerThanEqualExpression::ValidarSemantica()
-#line 835 "tree.tc"
+#line 1031 "tree.tc"
 {
     NewExpression *first = (NewExpression*)firstExpression->ValidarSemantica();
     NewExpression *second = (NewExpression*)secondExpression->ValidarSemantica();
@@ -2738,7 +3157,9 @@ TheNewClass * BigerThanEqualExpression::ValidarSemantica()
     {
         if((first->type == second->type) && first->type == Int)
         {
-            return new NewBigerThanEqualExpression(first,second);
+            NewBigerThanEqualExpression * bigerThanEqualExpr = new NewBigerThanEqualExpression(first,second);
+            bigerThanEqualExpr->type = Boolean;
+            return bigerThanEqualExpr;
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -2746,7 +3167,7 @@ TheNewClass * BigerThanEqualExpression::ValidarSemantica()
     ErrorSemantico("Error: No se pudo Evaluar la Expresion");
     return NULL;
 }
-#line 2750 "tree.cpp"
+#line 3171 "tree.cpp"
 
 int BigerThanEqualExpression::isA(int kind) const
 {
@@ -2773,25 +3194,27 @@ EqualExpression::~EqualExpression()
 }
 
 string EqualExpression::ToString()
-#line 456 "tree.tc"
+#line 629 "tree.tc"
 {
     ostringstream out;
     out << this->firstExpression->ToString() << "==" << this->secondExpression->ToString();
     return out.str();
 }
-#line 2783 "tree.cpp"
+#line 3204 "tree.cpp"
 
 TheNewClass * EqualExpression::ValidarSemantica()
-#line 853 "tree.tc"
+#line 1051 "tree.tc"
 {
     NewExpression *first = (NewExpression*)firstExpression->ValidarSemantica();
     NewExpression *second = (NewExpression*)secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) && first->type == Int)
+        if((first->type == second->type) && (first->type == Int || first->type == Boolean))
         {
-            return new NewEqualExpression(first,second);
+            NewEqualExpression *equalExpr = new NewEqualExpression(first,second);
+            equalExpr->type = Boolean; 
+            return equalExpr;
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -2799,7 +3222,7 @@ TheNewClass * EqualExpression::ValidarSemantica()
     ErrorSemantico("Error: No se pudo Evaluar la Expresion");
     return NULL;
 }
-#line 2803 "tree.cpp"
+#line 3226 "tree.cpp"
 
 int EqualExpression::isA(int kind) const
 {
@@ -2826,25 +3249,27 @@ NotEqualExpression::~NotEqualExpression()
 }
 
 string NotEqualExpression::ToString()
-#line 462 "tree.tc"
+#line 635 "tree.tc"
 {
     ostringstream out;
     out << this->firstExpression->ToString() << "!=" << this->secondExpression->ToString();
     return out.str();
 }
-#line 2836 "tree.cpp"
+#line 3259 "tree.cpp"
 
 TheNewClass * NotEqualExpression::ValidarSemantica()
-#line 871 "tree.tc"
+#line 1071 "tree.tc"
 {
     NewExpression *first = (NewExpression*)firstExpression->ValidarSemantica();
     NewExpression *second = (NewExpression*)secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) && first->type == Int)
+        if((first->type == second->type) && (first->type == Int || first->type == Boolean))
         {
-            return new NewNotEqualExpression(first,second);
+            NewNotEqualExpression *notEqualExpr = new NewNotEqualExpression(first,second);
+            notEqualExpr->type = Boolean;
+            return notEqualExpr;
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -2852,7 +3277,7 @@ TheNewClass * NotEqualExpression::ValidarSemantica()
     ErrorSemantico("Error: No se pudo Evaluar la Expresion");
     return NULL;
 }
-#line 2856 "tree.cpp"
+#line 3281 "tree.cpp"
 
 int NotEqualExpression::isA(int kind) const
 {
@@ -2879,16 +3304,16 @@ ShiftRightExpression::~ShiftRightExpression()
 }
 
 string ShiftRightExpression::ToString()
-#line 468 "tree.tc"
+#line 641 "tree.tc"
 {
     ostringstream out;
     out << this->firstExpression->ToString() << ">>" << this->secondExpression->ToString();
     return out.str();
 }
-#line 2889 "tree.cpp"
+#line 3314 "tree.cpp"
 
 TheNewClass * ShiftRightExpression::ValidarSemantica()
-#line 907 "tree.tc"
+#line 1111 "tree.tc"
 {
     NewExpression *first = (NewExpression*)firstExpression->ValidarSemantica();
     NewExpression *second = (NewExpression*)secondExpression->ValidarSemantica();
@@ -2897,7 +3322,9 @@ TheNewClass * ShiftRightExpression::ValidarSemantica()
     {
         if((first->type == second->type) && first->type == Int)
         {
-            return new NewShiftRightExpression(first,second);
+            NewShiftRightExpression *shifRightExpr = new NewShiftRightExpression(first,second);
+            shifRightExpr->type = Int;
+            return shifRightExpr;
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -2905,7 +3332,7 @@ TheNewClass * ShiftRightExpression::ValidarSemantica()
     ErrorSemantico("Error: No se pudo Evaluar la Expresion");
     return NULL;
 }
-#line 2909 "tree.cpp"
+#line 3336 "tree.cpp"
 
 int ShiftRightExpression::isA(int kind) const
 {
@@ -2932,16 +3359,16 @@ ShiftLeftExpression::~ShiftLeftExpression()
 }
 
 string ShiftLeftExpression::ToString()
-#line 474 "tree.tc"
+#line 647 "tree.tc"
 {
     ostringstream out;
     out << this->firstExpression->ToString() << "<<" << this->secondExpression->ToString();
     return out.str();
 }
-#line 2942 "tree.cpp"
+#line 3369 "tree.cpp"
 
 TheNewClass * ShiftLeftExpression::ValidarSemantica()
-#line 889 "tree.tc"
+#line 1091 "tree.tc"
 {
     NewExpression *first = (NewExpression*)firstExpression->ValidarSemantica();
     NewExpression *second = (NewExpression*)secondExpression->ValidarSemantica();
@@ -2950,7 +3377,9 @@ TheNewClass * ShiftLeftExpression::ValidarSemantica()
     {
         if((first->type == second->type) && first->type == Int)
         {
-            return new NewShiftLeftExpression(first,second);
+            NewShiftLeftExpression *shiftLeftExpr = new NewShiftLeftExpression(first,second);
+            shiftLeftExpr->type = Int;
+            return shiftLeftExpr;
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -2958,7 +3387,7 @@ TheNewClass * ShiftLeftExpression::ValidarSemantica()
     ErrorSemantico("Error: No se pudo Evaluar la Expresion");
     return NULL;
 }
-#line 2962 "tree.cpp"
+#line 3391 "tree.cpp"
 
 int ShiftLeftExpression::isA(int kind) const
 {
@@ -2985,16 +3414,16 @@ RotExpression::~RotExpression()
 }
 
 string RotExpression::ToString()
-#line 480 "tree.tc"
+#line 653 "tree.tc"
 {
     ostringstream out;
     out << this->firstExpression->ToString() << "rot" << this->secondExpression->ToString();
     return out.str();
 }
-#line 2995 "tree.cpp"
+#line 3424 "tree.cpp"
 
 TheNewClass * RotExpression::ValidarSemantica()
-#line 925 "tree.tc"
+#line 1131 "tree.tc"
 {
     NewExpression *first = (NewExpression*)firstExpression->ValidarSemantica();
     NewExpression *second = (NewExpression*)secondExpression->ValidarSemantica();
@@ -3003,7 +3432,9 @@ TheNewClass * RotExpression::ValidarSemantica()
     {
         if((first->type == second->type) && first->type == Int)
         {
-            return new NewRotExpression(first,second);
+            NewRotExpression *rotExpr = new NewRotExpression(first,second);
+            rotExpr->type = Int;
+            return rotExpr;
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -3011,7 +3442,7 @@ TheNewClass * RotExpression::ValidarSemantica()
     ErrorSemantico("Error: No se pudo Evaluar la Expresion");
     return NULL;
 }
-#line 3015 "tree.cpp"
+#line 3446 "tree.cpp"
 
 int RotExpression::isA(int kind) const
 {
@@ -3038,25 +3469,27 @@ OrExpression::~OrExpression()
 }
 
 string OrExpression::ToString()
-#line 498 "tree.tc"
+#line 671 "tree.tc"
 {
     ostringstream out;
     out << this->firstExpression->ToString() << "||" << this->secondExpression->ToString();
     return out.str();
 }
-#line 3048 "tree.cpp"
+#line 3479 "tree.cpp"
 
 TheNewClass * OrExpression::ValidarSemantica()
-#line 943 "tree.tc"
+#line 1151 "tree.tc"
 {
     NewExpression *first = (NewExpression*)firstExpression->ValidarSemantica();
     NewExpression *second = (NewExpression*)secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) && first->type == Int)
+        if((first->type == second->type) && first->type == Boolean)
         {
-            return new NewOrExpression(first,second);
+            NewOrExpression *orExpr = new NewOrExpression(first,second);
+            orExpr->type;
+            return orExpr;
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -3064,7 +3497,7 @@ TheNewClass * OrExpression::ValidarSemantica()
     ErrorSemantico("Error: No se pudo Evaluar la Expresion");
     return NULL;
 }
-#line 3068 "tree.cpp"
+#line 3501 "tree.cpp"
 
 int OrExpression::isA(int kind) const
 {
@@ -3091,25 +3524,27 @@ AndExpression::~AndExpression()
 }
 
 string AndExpression::ToString()
-#line 492 "tree.tc"
+#line 665 "tree.tc"
 {
     ostringstream out;
     out << this->firstExpression->ToString() << "&&" << this->secondExpression->ToString();
     return out.str();
 }
-#line 3101 "tree.cpp"
+#line 3534 "tree.cpp"
 
 TheNewClass * AndExpression::ValidarSemantica()
-#line 961 "tree.tc"
+#line 1171 "tree.tc"
 {
     NewExpression *first = (NewExpression*)firstExpression->ValidarSemantica();
     NewExpression *second = (NewExpression*)secondExpression->ValidarSemantica();
 
     if(first != NULL && second != NULL)
     {
-        if((first->type == second->type) && first->type == Int)
+        if((first->type == second->type) && first->type == Boolean)
         {
-            return new NewAndExpression(first,second);
+            NewAndExpression *andExpr = new NewAndExpression(first,second);
+            andExpr->type = Boolean;
+            return andExpr; 
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -3117,7 +3552,7 @@ TheNewClass * AndExpression::ValidarSemantica()
     ErrorSemantico("Error: No se pudo Evaluar la Expresion");
     return NULL;
 }
-#line 3121 "tree.cpp"
+#line 3556 "tree.cpp"
 
 int AndExpression::isA(int kind) const
 {
@@ -3144,16 +3579,16 @@ ModExpression::~ModExpression()
 }
 
 string ModExpression::ToString()
-#line 504 "tree.tc"
+#line 677 "tree.tc"
 {
     ostringstream out;
     out << this->firstExpression->ToString() << "%" << this->secondExpression->ToString();
     return out.str();
 }
-#line 3154 "tree.cpp"
+#line 3589 "tree.cpp"
 
 TheNewClass * ModExpression::ValidarSemantica()
-#line 979 "tree.tc"
+#line 1191 "tree.tc"
 {
     NewExpression *first = (NewExpression*)firstExpression->ValidarSemantica();
     NewExpression *second = (NewExpression*)secondExpression->ValidarSemantica();
@@ -3162,7 +3597,9 @@ TheNewClass * ModExpression::ValidarSemantica()
     {
         if((first->type == second->type) && first->type == Int)
         {
-            return new NewModExpression(first,second);
+            NewModExpression *modExpr = new NewModExpression(first,second);
+            modExpr->type = Boolean;
+            return modExpr;
         }
         ErrorSemantico("Error: Tipos Incompatibles");
         return NULL;
@@ -3170,7 +3607,7 @@ TheNewClass * ModExpression::ValidarSemantica()
     ErrorSemantico("Error: No se pudo Evaluar la Expresion");
     return NULL;
 }
-#line 3174 "tree.cpp"
+#line 3611 "tree.cpp"
 
 int ModExpression::isA(int kind) const
 {
@@ -3197,16 +3634,16 @@ NotExpression::~NotExpression()
 }
 
 string NotExpression::ToString()
-#line 486 "tree.tc"
+#line 659 "tree.tc"
 {
     ostringstream out;
     out <<  "!" << this->firstExpression->ToString();
     return out.str();
 }
-#line 3207 "tree.cpp"
+#line 3644 "tree.cpp"
 
 TheNewClass * NotExpression::ValidarSemantica()
-#line 997 "tree.tc"
+#line 1211 "tree.tc"
 {
     NewExpression *first = (NewExpression*)firstExpression->ValidarSemantica();
     
@@ -3214,7 +3651,9 @@ TheNewClass * NotExpression::ValidarSemantica()
     {
         if(first->type == Boolean)
         {
-            return new NewNotExpression(first);
+            NewNotExpression *notExpr = new NewNotExpression(first);
+            notExpr->type = Boolean;
+            return notExpr;
         }
         ErrorSemantico("Error: Tipo Incompatibles");
         return NULL;
@@ -3222,7 +3661,7 @@ TheNewClass * NotExpression::ValidarSemantica()
     ErrorSemantico("Error: No se pudo Evaluar la Expresion");
     return NULL;
 }
-#line 3226 "tree.cpp"
+#line 3665 "tree.cpp"
 
 int NotExpression::isA(int kind) const
 {
@@ -3250,20 +3689,20 @@ ConstantIntExpression::~ConstantIntExpression()
 }
 
 string ConstantIntExpression::ToString()
-#line 510 "tree.tc"
+#line 683 "tree.tc"
 {
     ostringstream out;
     out << this->constant;
     return out.str();
 }
-#line 3260 "tree.cpp"
+#line 3699 "tree.cpp"
 
 TheNewClass * ConstantIntExpression::ValidarSemantica()
-#line 1060 "tree.tc"
+#line 1304 "tree.tc"
 {
     return new NewConstantIntExpression(constant);
 }
-#line 3267 "tree.cpp"
+#line 3706 "tree.cpp"
 
 int ConstantIntExpression::isA(int kind) const
 {
@@ -3291,20 +3730,20 @@ ConstantBoolExpression::~ConstantBoolExpression()
 }
 
 string ConstantBoolExpression::ToString()
-#line 517 "tree.tc"
+#line 690 "tree.tc"
 {
     ostringstream out;
     out << this->constant;
     return out.str();
 }
-#line 3301 "tree.cpp"
+#line 3740 "tree.cpp"
 
 TheNewClass * ConstantBoolExpression::ValidarSemantica()
-#line 1075 "tree.tc"
+#line 1323 "tree.tc"
 {
     return new NewConstantBoolExpression(constant);
 }
-#line 3308 "tree.cpp"
+#line 3747 "tree.cpp"
 
 int ConstantBoolExpression::isA(int kind) const
 {
@@ -3332,20 +3771,20 @@ ConstantCharExpression::~ConstantCharExpression()
 }
 
 string ConstantCharExpression::ToString()
-#line 531 "tree.tc"
+#line 704 "tree.tc"
 {
     ostringstream out;
     out << this->constant;
     return out.str();
 }
-#line 3342 "tree.cpp"
+#line 3781 "tree.cpp"
 
 TheNewClass * ConstantCharExpression::ValidarSemantica()
-#line 1065 "tree.tc"
+#line 1309 "tree.tc"
 {
     return new NewConstantCharExpression(constant);
 }
-#line 3349 "tree.cpp"
+#line 3788 "tree.cpp"
 
 int ConstantCharExpression::isA(int kind) const
 {
@@ -3373,20 +3812,24 @@ ConstantStringExpression::~ConstantStringExpression()
 }
 
 string ConstantStringExpression::ToString()
-#line 524 "tree.tc"
+#line 697 "tree.tc"
 {
     ostringstream out;
     out << this->constant;
     return out.str();
 }
-#line 3383 "tree.cpp"
+#line 3822 "tree.cpp"
 
 TheNewClass * ConstantStringExpression::ValidarSemantica()
-#line 1070 "tree.tc"
+#line 1314 "tree.tc"
 {
-    return new NewConstantStringExpression(constant);
+    string id = getLabel("var_str");
+    variableStringMap[id] = constant;
+    NewConstantStringExpression *tem = new NewConstantStringExpression(id);
+    tem->type = String; 
+    return tem;
 }
-#line 3390 "tree.cpp"
+#line 3833 "tree.cpp"
 
 int ConstantStringExpression::isA(int kind) const
 {
@@ -3416,7 +3859,7 @@ VariableDef::~VariableDef()
 }
 
 string VariableDef::ToString()
-#line 568 "tree.tc"
+#line 741 "tree.tc"
 {
     ostringstream out;
     out << TypeToString(variable_type) << " " << id;
@@ -3428,47 +3871,46 @@ string VariableDef::ToString()
     out << ";";
     return out.str();
 }
-#line 3432 "tree.cpp"
+#line 3875 "tree.cpp"
 
 TheNewClass * VariableDef::ValidarSemantica()
-#line 1317 "tree.tc"
+#line 1613 "tree.tc"
 {
-    Variable *var = contextos[currentContexto]->contextoMap[id];
+  cout << "entro "<< endl;
+    Variable *var = variableDeclared[id];
     if(var != NULL){
       string error = "Variable ya definida";
       ErrorSemantico(error);
       return NULL;
     }
-    contextos[currentContexto]->currentOffset+=1;
-    int offset = contextos[currentContexto]->currentOffset;
-    int level = contextos[currentContexto]->currentLevel;
     Variable *newVariable;
     if(isArrayDef)
     {
-        newVariable = new Variable(offset,level,0,true,array_dimension,false,variable_type);
+        newVariable = new Variable(currentOffset,0,0,true,array_dimension,false,variable_type);
     }
     else
     {
         NewConstantExpression * expr = (NewConstantExpression*)initial_value->ValidarSemantica();
         if(dynamic_cast<NewConstantIntExpression*>(expr) != NULL){
             NewConstantIntExpression *intExpr = (NewConstantIntExpression*)expr;    
-            newVariable = new Variable(offset,level,intExpr->Newconstant,false,0,false,variable_type);
+            newVariable = new Variable(currentOffset,0,intExpr->Newconstant,false,0,false,Int);
         }
         else
         {
             if(dynamic_cast<NewConstantBoolExpression*>(expr) != NULL){
                 NewConstantBoolExpression *boolExpr = (NewConstantBoolExpression*)expr;
                 if(boolExpr->Newconstant)
-                    newVariable = new Variable(offset,level,1,false,0,false,variable_type);
+                    newVariable = new Variable(currentOffset,0,1,false,0,false,Boolean);
                 else
-                    newVariable = new Variable(offset,level,0,false,0,false,variable_type);
+                    newVariable = new Variable(currentOffset,0,0,false,0,false,Boolean);
             }
         }
     }
-    contextos[currentContexto]->contextoMap[id] = newVariable;
+    currentOffset+=1;
+    variableDeclared[id] = newVariable;
     return NULL;
 }
-#line 3472 "tree.cpp"
+#line 3914 "tree.cpp"
 
 int VariableDef::isA(int kind) const
 {
@@ -3481,6 +3923,48 @@ int VariableDef::isA(int kind) const
 const char *VariableDef::getKindName() const
 {
 	return "VariableDef";
+}
+
+LocalVariableDef::LocalVariableDef(int first_line, int first_column)
+	: Statement()
+{
+	this->kind__ = LocalVariableDef_kind;
+	this->first_line = first_line;
+	this->first_column = first_column;
+	this->variable_names = NULL;
+}
+
+LocalVariableDef::~LocalVariableDef()
+{
+	// not used
+}
+
+string LocalVariableDef::ToString()
+#line 753 "tree.tc"
+{
+   return "NADA";
+}
+#line 3948 "tree.cpp"
+
+TheNewClass * LocalVariableDef::ValidarSemantica()
+#line 1649 "tree.tc"
+{
+   cout<<"entro <<LocalVariableDef" << endl;
+   return NULL;
+}
+#line 3956 "tree.cpp"
+
+int LocalVariableDef::isA(int kind) const
+{
+	if(kind == LocalVariableDef_kind)
+		return 1;
+	else
+		return Statement::isA(kind);
+}
+
+const char *LocalVariableDef::getKindName() const
+{
+	return "LocalVariableDef";
 }
 
 MethodDef::MethodDef(string id)
@@ -3496,7 +3980,7 @@ MethodDef::~MethodDef()
 }
 
 string MethodDef::ToString()
-#line 557 "tree.tc"
+#line 730 "tree.tc"
 {
     ostringstream out;
     out << TypeToString(returnType) << " " << id << "(";
@@ -3506,19 +3990,20 @@ string MethodDef::ToString()
     out << block->ToString();
     return out.str();
 }
-#line 3510 "tree.cpp"
+#line 3994 "tree.cpp"
 
 TheNewClass * MethodDef::ValidarSemantica()
-#line 1272 "tree.tc"
+#line 1561 "tree.tc"
 {
-  Contexto *contestoActual = contextos[currentContexto];
+  Contexto *contextoActual = contextos[0];
   currentContexto += 1;
 
-  Contexto *contextoNuevo = new Contexto();
+ /* Contexto *contextoNuevo = new Contexto();
   contextoNuevo->currentLevel = 0;
-  contextoNuevo->currentOffset = 1;
-
+  contextoNuevo->currentOffset = 0;
+*/
   list<ParameterDef *>::iterator it;
+
   if(parameters != NULL){
       it = parameters->begin();
       while(it != parameters->end())
@@ -3526,34 +4011,40 @@ TheNewClass * MethodDef::ValidarSemantica()
         NewParameterDef *param = (NewParameterDef*)(*it)->ValidarSemantica();
         string str = param->newId;
         Type tipo = param->newParameterType;
-        Variable *var = new Variable(contextoNuevo->currentOffset,contextoNuevo->currentLevel,0,false,0,true,tipo);
-        if(contextoNuevo->contextoMap[str] != NULL){
+        Variable *var = new Variable(contextoActual->currentOffset,contextoActual->currentLevel,0,false,0,true,tipo);
+        if(contextoActual->contextoMap[str] != NULL){
           string str = "Parametros repetidos";
           ErrorSemantico(str);
           return NULL;
         }else{
-          contextoNuevo->contextoMap[str] = var;
-          contextoNuevo->currentOffset += 1;
+          contextoActual->contextoMap[str] = var;
+          contextoActual->currentOffset += 1;
         }
         it++;
       }
   }
-  contextos[currentContexto] = contextoNuevo;
-  contextoNuevo->contextoAnterior = contestoActual;
-  cout<<"funcion: "<<id<<endl;
-  NewBlockStatement *newBlockStatement = (NewBlockStatement*)(block->ValidarSemantica());
-  //NewBlockStatement *newBlockStatement = NULL;
+  //contextos[currentContexto] = contextoNuevo;
+  //contextoNuevo->contextoAnterior = contestoActual;
   if(methodDeclared[id] != NULL)
   {
-    string str = "Metodo ya definido";
+    string str = "Metodo ya definido << MethodDef ";
     ErrorSemantico(str);
     return NULL;
   }
-  Procedimiento *p = new Procedimiento(id,newBlockStatement);
+  Procedimiento *p = new Procedimiento(id,NULL);
+  if(parameters != NULL)
+    p->countParametros = parameters->size();
+  else 
+    p->countParametros = 0;
+
   methodDeclared[id] = p;
+  NewBlockStatement *newBlockStatement  = (NewBlockStatement*)(block->ValidarSemantica());
+  methodDeclared[id]->newBlockStatement = newBlockStatement;
+
+
   return NULL;
 }
-#line 3557 "tree.cpp"
+#line 4048 "tree.cpp"
 
 int MethodDef::isA(int kind) const
 {
@@ -3585,7 +4076,7 @@ IfStatement::~IfStatement()
 }
 
 string IfStatement::ToString()
-#line 600 "tree.tc"
+#line 777 "tree.tc"
 {
     ostringstream out;
     out << "if (" << condition->ToString() << ")" << endl;
@@ -3598,14 +4089,17 @@ string IfStatement::ToString()
 
     return out.str();
 }
-#line 3602 "tree.cpp"
+#line 4093 "tree.cpp"
 
 TheNewClass * IfStatement::ValidarSemantica()
-#line 1082 "tree.tc"
+#line 1330 "tree.tc"
 {
+    cout <<"Entro IfStatement"<<endl;
     NewExpression *newCondition = (NewExpression*)condition->ValidarSemantica();
-    if(newCondition == NULL)
+    if(newCondition == NULL){
+        cout<<"fallo newCondition << IfStatement"<<endl;
         return NULL;
+    }
     if(newCondition->type != Boolean)
     {
         ErrorSemantico("Error: Condicion if debe se bool");
@@ -3613,17 +4107,22 @@ TheNewClass * IfStatement::ValidarSemantica()
     }
     NewStatement *newTrueBlock = (NewStatement*)statementTrue->ValidarSemantica();
     NewStatement *newFalseBlock;
-    if(newTrueBlock == NULL)
+    if(newTrueBlock == NULL){
+        cout<<"fallo newTrueBlock << IfStatement"<<endl;
         return NULL;
+    }
     if(statementFalse != NULL)
     {
         newFalseBlock = (NewStatement*)statementFalse->ValidarSemantica();
-        if(newFalseBlock == NULL)
+        if(newFalseBlock == NULL){
+            cout<<"fallo newFalseBlock << IfStatement"<<endl;
             return NULL;
+        }
     }
+    cout <<"Salio IfStatement"<<endl;
     return new NewIfStatement(newCondition,newTrueBlock,newFalseBlock);
 }
-#line 3627 "tree.cpp"
+#line 4126 "tree.cpp"
 
 int IfStatement::isA(int kind) const
 {
@@ -3654,34 +4153,39 @@ WhileStatement::~WhileStatement()
 }
 
 string WhileStatement::ToString()
-#line 614 "tree.tc"
+#line 791 "tree.tc"
 {
     ostringstream out;
     out << "while (" << condition->ToString() << ")" << endl;
     out << "{" << statementTrue->ToString() << endl << "}";
     return out.str();
 }
-#line 3665 "tree.cpp"
+#line 4164 "tree.cpp"
 
 TheNewClass * WhileStatement::ValidarSemantica()
-#line 1105 "tree.tc"
+#line 1361 "tree.tc"
 {
+    cout <<"Entro WhileStatement"<<endl;
     NewExpression *newCondition = (NewExpression*)condition->ValidarSemantica();
-    if(newCondition == NULL)
+    if(newCondition == NULL){
+        cout<<"fallo newCondition << WhileStatement"<<endl;
         return NULL;
-    if(newCondition->type == Boolean)
+    }
+    if(newCondition->type != Boolean)
     {
         ErrorSemantico("Error: Condicion if debe se bool");
         return NULL;                       
     }
 
     NewStatement *newStatementTrue = (NewStatement*)statementTrue->ValidarSemantica();
-    if(newStatementTrue == NULL)
+    if(newStatementTrue == NULL){
+        cout<<"fallo newStatementTrue << WhileStatement"<<endl;
         return NULL;
-
+    }
+    cout <<"Salio WhileStatement"<<endl;
     return new NewWhileStatement(newCondition,newStatementTrue);
 }
-#line 3685 "tree.cpp"
+#line 4189 "tree.cpp"
 
 int WhileStatement::isA(int kind) const
 {
@@ -3714,7 +4218,7 @@ ForStatement::~ForStatement()
 }
 
 string ForStatement::ToString()
-#line 622 "tree.tc"
+#line 799 "tree.tc"
 {
     ostringstream out;
     out << "for(";
@@ -3723,33 +4227,44 @@ string ForStatement::ToString()
 
     return out.str();
 }
-#line 3727 "tree.cpp"
+#line 4231 "tree.cpp"
 
 TheNewClass * ForStatement::ValidarSemantica()
-#line 1123 "tree.tc"
+#line 1384 "tree.tc"
 {
+    cout <<"Entro ForStatement"<<endl;
     NewStatement *newFirstListAssign = (NewStatement*)firstListAssign->ValidarSemantica();
-    if(newFirstListAssign == NULL)
+    if(newFirstListAssign == NULL){
+        cout<<"fallo newFirstListAssign << ForStatement"<<endl;
         return NULL;
-
+    }
     NewExpression *newCondition = (NewExpression*)condition->ValidarSemantica();
-    if(newCondition == NULL)
+    if(newCondition == NULL){
+        cout<<"fallo newCondition << ForStatement"<<endl;
         return NULL;
+    }
 
-    if(newCondition->type != Boolean)
+    if(newCondition->type != Boolean){
+        string str = "La condicion tiene que se bool << ForStatement";
+        ErrorSemantico(str);
         return NULL;
+    }
 
     NewStatement *newLastListAssign = (NewStatement*)lastListAssign->ValidarSemantica();
-    if(newLastListAssign == NULL)
+    if(newLastListAssign == NULL){
+        cout<<"fallo newLastListAssign << ForStatement"<<endl;
         return NULL;
+    }
 
     NewStatement *newStatementTrue = (NewStatement*)statementTrue->ValidarSemantica();
-    if(newStatementTrue == NULL)
+    if(newStatementTrue == NULL){
+        cout<<"fallo newStatementTrue"<<endl;
         return NULL;
-
+    }
+    cout <<"Salio ForStatement"<<endl;
     return new NewForStatement(newFirstListAssign,newCondition,newLastListAssign,newStatementTrue);
 }
-#line 3753 "tree.cpp"
+#line 4268 "tree.cpp"
 
 int ForStatement::isA(int kind) const
 {
@@ -3780,29 +4295,34 @@ AssignStatement::~AssignStatement()
 }
 
 string AssignStatement::ToString()
-#line 632 "tree.tc"
+#line 809 "tree.tc"
 {
     ostringstream out;
     out << "// Linea " << first_line << " Columna " << first_column << "\n"; 
     out << leftValue->ToString() << " = " << value->ToString() << ";";
     return out.str();
 }
-#line 3791 "tree.cpp"
+#line 4306 "tree.cpp"
 
 TheNewClass * AssignStatement::ValidarSemantica()
-#line 1231 "tree.tc"
+#line 1517 "tree.tc"
 {
+    cout<<"Entro AssignStatement"<<endl;
     NewExpression *newLeftValue = (NewExpression*)leftValue->ValidarSemantica();
-    if(newLeftValue == NULL)
+    if(newLeftValue == NULL){
+        cout<<"fallo newLeftValue << AssignStatement"<<endl;
         return NULL;
+    }
 
     NewExpression *newValue = (NewExpression*)value->ValidarSemantica();
-    if(newValue == NULL)
+    if(newValue == NULL){
+        cout<<"fallo newValue << AssignStatement"<<endl;
         return NULL;
-
+    }
+    cout<<"Salio AssignStatement"<<endl;
     return new NewAssignStatement(newLeftValue,newValue);
 }
-#line 3806 "tree.cpp"
+#line 4326 "tree.cpp"
 
 int AssignStatement::isA(int kind) const
 {
@@ -3832,7 +4352,7 @@ ReadStatement::~ReadStatement()
 }
 
 string ReadStatement::ToString()
-#line 581 "tree.tc"
+#line 758 "tree.tc"
 {
     ostringstream out;
     out << "read ";
@@ -3840,11 +4360,12 @@ string ReadStatement::ToString()
       out << ListToString(listExpression, ",", false);
     return out.str();
 }
-#line 3844 "tree.cpp"
+#line 4364 "tree.cpp"
 
 TheNewClass * ReadStatement::ValidarSemantica()
-#line 1194 "tree.tc"
+#line 1476 "tree.tc"
 {
+    cout <<"Entro ReadStatement"<<endl;
     list<NewExpression*> *newListExpression = new list<NewExpression*>();
     if(listExpression == NULL)
         return NULL;
@@ -3859,9 +4380,10 @@ TheNewClass * ReadStatement::ValidarSemantica()
         newListExpression->push_back(newExpr);
         it++;
     }
+    cout <<"Salio ReadStatement"<<endl;
     return new NewReadStatement(newListExpression);
 }
-#line 3865 "tree.cpp"
+#line 4387 "tree.cpp"
 
 int ReadStatement::isA(int kind) const
 {
@@ -3891,7 +4413,7 @@ PrintStatement::~PrintStatement()
 }
 
 string PrintStatement::ToString()
-#line 590 "tree.tc"
+#line 767 "tree.tc"
 {
     ostringstream out;
     out << "print ";
@@ -3900,11 +4422,12 @@ string PrintStatement::ToString()
     out << ";";
     return out.str();
 }
-#line 3904 "tree.cpp"
+#line 4426 "tree.cpp"
 
 TheNewClass * PrintStatement::ValidarSemantica()
-#line 1213 "tree.tc"
+#line 1497 "tree.tc"
 {
+    cout <<"Entro PrintStatement"<<endl;
     list<NewExpression*> *newListExpression = new list<NewExpression*>();
     if(listExpression == NULL)
         return NULL;
@@ -3918,9 +4441,10 @@ TheNewClass * PrintStatement::ValidarSemantica()
         newListExpression->push_back(newExpr);
         it++;
     }
+    cout <<"Salio PrintStatement"<<endl;
     return new NewPrintStatement(newListExpression);
 }
-#line 3924 "tree.cpp"
+#line 4448 "tree.cpp"
 
 int PrintStatement::isA(int kind) const
 {
@@ -3951,41 +4475,39 @@ MethodCallStatement::~MethodCallStatement()
 }
 
 string MethodCallStatement::ToString()
-#line 640 "tree.tc"
+#line 817 "tree.tc"
 {
     return this->id + "(" + ListToString(parameters, ", ", false) + ");";
 }
-#line 3959 "tree.cpp"
+#line 4483 "tree.cpp"
 
 TheNewClass * MethodCallStatement::ValidarSemantica()
-#line 1244 "tree.tc"
+#line 1535 "tree.tc"
 {
-  if(methodDeclared[id]!= NULL)
-  {
-    string str = "Metodo no declarado";
-    ErrorSemantico(str);
-    return NULL;
-  }
-
+   cout << "Entro MethodCallStatement" << endl;
   list<NewExpression*> *newListExpression = new list<NewExpression*>();
-
-  list<Expression*>::iterator it;
-  it = parameters->begin();
-  while(it != parameters->end()){
-    NewExpression * newExpr = (NewExpression*)((*it)->ValidarSemantica());
-    if(newExpr == NULL)
-    {
-      string str = "Error";
-      ErrorSemantico(str);
-      return NULL;
-    }
-    newListExpression->push_back(newExpr);
-    it++;  
-  }
-
+  if(parameters != NULL){
+     list<Expression*>::iterator it;
+     it = parameters->begin();
+     int indice_parametro = 0;
+     while(it != parameters->end()){
+       NewExpression * newExpr = (NewExpression*)((*it)->ValidarSemantica());
+       if(newExpr == NULL)
+       {
+         string str = "Error << MethodCallStatement";
+         ErrorSemantico(str);
+         return NULL;
+       }
+       newExpr->indice = indice_parametro;
+       newListExpression->push_back(newExpr);
+       it++;  
+       indice_parametro++;
+     }
+   }
+  cout<<"Salio MethodCallStatement"<<endl;
   return new NewMethodCallStatement(id,newListExpression);
 }
-#line 3989 "tree.cpp"
+#line 4511 "tree.cpp"
 
 int MethodCallStatement::isA(int kind) const
 {
@@ -4015,21 +4537,25 @@ ReturnStatement::~ReturnStatement()
 }
 
 string ReturnStatement::ToString()
-#line 645 "tree.tc"
+#line 822 "tree.tc"
 {
     return "return " + returnExpression->ToString() + ";";
 }
-#line 4023 "tree.cpp"
+#line 4545 "tree.cpp"
 
 TheNewClass * ReturnStatement::ValidarSemantica()
-#line 1147 "tree.tc"
+#line 1419 "tree.tc"
 {
+    cout <<"Entro ReturnStatement"<<endl;
     NewExpression *newReturnExpression = (NewExpression*)returnExpression->ValidarSemantica();
-    if(newReturnExpression != NULL)
+    if(newReturnExpression == NULL){
+        cout<<"fallo newReturnExpression << ReturnStatement"<<endl;
         return NULL;
+    }
+    cout <<"Salio ReturnStatement"<<endl;
     return new NewReturnStatement(newReturnExpression);
 }
-#line 4033 "tree.cpp"
+#line 4559 "tree.cpp"
 
 int ReturnStatement::isA(int kind) const
 {
@@ -4058,18 +4584,18 @@ BreakStatement::~BreakStatement()
 }
 
 string BreakStatement::ToString()
-#line 650 "tree.tc"
+#line 827 "tree.tc"
 {
     return "break;";
 }
-#line 4066 "tree.cpp"
+#line 4592 "tree.cpp"
 
 TheNewClass * BreakStatement::ValidarSemantica()
-#line 1355 "tree.tc"
+#line 1655 "tree.tc"
 {
     return new NewBreakStatement();
 }
-#line 4073 "tree.cpp"
+#line 4599 "tree.cpp"
 
 int BreakStatement::isA(int kind) const
 {
@@ -4098,18 +4624,18 @@ ContinueStatement::~ContinueStatement()
 }
 
 string ContinueStatement::ToString()
-#line 655 "tree.tc"
+#line 832 "tree.tc"
 {
     return "continue;";
 }
-#line 4106 "tree.cpp"
+#line 4632 "tree.cpp"
 
 TheNewClass * ContinueStatement::ValidarSemantica()
-#line 1360 "tree.tc"
+#line 1660 "tree.tc"
 {
     return new NewContinueStatement();
 }
-#line 4113 "tree.cpp"
+#line 4639 "tree.cpp"
 
 int ContinueStatement::isA(int kind) const
 {
@@ -4138,7 +4664,7 @@ BlockStatement::~BlockStatement()
 }
 
 string BlockStatement::ToString()
-#line 660 "tree.tc"
+#line 837 "tree.tc"
 {
     ostringstream out;
 
@@ -4151,58 +4677,64 @@ string BlockStatement::ToString()
 
     return out.str();
 }
-#line 4155 "tree.cpp"
+#line 4681 "tree.cpp"
 
 TheNewClass * BlockStatement::ValidarSemantica()
-#line 1155 "tree.tc"
+#line 1431 "tree.tc"
 {
+    cout << "Entro BlockStatement" << endl;
     list<NewStatement*> *newListStatement = new list<NewStatement*>();
     if(listStatements == NULL){
+        string str = "Error: newListStatement es nulo";
+        ErrorSemantico(str);
         return NULL;
     }
 
     list<Statement*>::iterator it;
     it = listStatements->begin();
-    while(it != listStatements->end()) {
+    while(it != listStatements->end()){
         Statement *stmTemp = *it;
         NewStatement *newStm ;
         if(dynamic_cast<BlockStatement*>(stmTemp)!= NULL)
         {
-          cout<<"entro1" << endl;
+            cout<<"entro 1"<<endl;
           currentContexto += 1; 
+          contextos[currentContexto] = new Contexto();
           newStm = (NewStatement*)stmTemp->ValidarSemantica();
+          contextos[currentContexto] = contextos[currentContexto - 1];
           currentContexto -= 1;
-          cout<<"entro2" << endl;
         }
         else
         {
-          cout<<"entro3" << endl;
           newStm = (NewStatement*)(stmTemp->ValidarSemantica());
-          cout<<"entro4" << endl;
         }
-        if(newStm == NULL){
+        if(newStm == NULL && dynamic_cast<LocalVariableDef*>(stmTemp) == NULL){
             string str = "Error en el bloque ";
             ErrorSemantico(str);
             return NULL;
         }
-        newListStatement->push_back(newStm);
+        if (dynamic_cast<LocalVariableDef*>(stmTemp)== NULL) {
+           newListStatement->push_back(newStm);
+        }
+        
         it++;
     }
     NewBlockStatement *newblock = new NewBlockStatement(); 
     newblock->newListStatements = newListStatement;
+    cout << "Salio BlockStatement" << endl;
     return newblock;
 }
-#line 4196 "tree.cpp"
+#line 4728 "tree.cpp"
 
 void BlockStatement::AddStatement(Statement * stm)
-#line 392 "tree.tc"
+#line 565 "tree.tc"
 {
     if(listStatements == 0)
       listStatements = new StatementList();
       
     listStatements->push_back(stm);
 }
-#line 4206 "tree.cpp"
+#line 4738 "tree.cpp"
 
 int BlockStatement::isA(int kind) const
 {
@@ -4270,6 +4802,7 @@ Procedimiento::Procedimiento(string id, NewBlockStatement * newBlockStatement)
 	this->linenum__ = YYNODESTATE::getState()->currLinenum();
 	this->id = id;
 	this->newBlockStatement = newBlockStatement;
+	this->countParametros = 0;
 }
 
 Procedimiento::~Procedimiento()

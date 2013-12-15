@@ -5,6 +5,7 @@
 
   #include <list>
   #include <map>
+  #include <string>
   #include <iostream>
   using namespace std;
   
@@ -32,6 +33,7 @@
   typedef list<VariableDef *> VariableDefList;
   typedef list<MethodDef *> MethodDefList;
   typedef list<ParameterDef *> ParameterDefList;
+  typedef list<string> VariableNameList;
 
   typedef enum {OpAdd,OpSub,OpMul,OpDiv,OpMod,OpAnd,OpOr,OpNot,OpGT,OpLT,OpGTE,
   OpLTE,OpEq,OpNotEq,OpRShift,OpLShift,OpRot} ExpressionOperator;
@@ -40,52 +42,52 @@
   typedef list<NewStatement *> NewStatementList;
   typedef list<NewExpression *> NewExpressionList;
 
-#line 44 "tree.h"
+#line 46 "tree.h"
 
 #include <new>
 
-const int TheNewClass_kind = 46;
-const int NewClassDef_kind = 47;
-const int NewExpression_kind = 48;
-const int NewStatement_kind = 49;
-const int NewConstantExpression_kind = 51;
-const int NewBinaryExpression_kind = 56;
-const int NewUnaryExpression_kind = 57;
-const int NewParameterDef_kind = 58;
-const int NewLValueExpression_kind = 59;
-const int NewMethodCallExpression_kind = 60;
-const int NewConstantIntExpression_kind = 52;
-const int NewConstantStringExpression_kind = 53;
-const int NewConstantBoolExpression_kind = 54;
-const int NewConstantCharExpression_kind = 55;
-const int NewAddExpression_kind = 61;
-const int NewSubExpression_kind = 62;
-const int NewMultExpression_kind = 63;
-const int NewDivExpression_kind = 64;
-const int NewLessThanExpression_kind = 65;
-const int NewLessThanEqualExpression_kind = 66;
-const int NewBigerThanExpression_kind = 67;
-const int NewBigerThanEqualExpression_kind = 68;
-const int NewEqualExpression_kind = 69;
-const int NewNotEqualExpression_kind = 70;
-const int NewShiftRightExpression_kind = 71;
-const int NewShiftLeftExpression_kind = 72;
-const int NewRotExpression_kind = 73;
-const int NewOrExpression_kind = 74;
-const int NewAndExpression_kind = 75;
-const int NewModExpression_kind = 77;
-const int NewNotExpression_kind = 76;
-const int NewIfStatement_kind = 78;
-const int NewWhileStatement_kind = 79;
-const int NewForStatement_kind = 80;
-const int NewAssignStatement_kind = 81;
-const int NewReadStatement_kind = 82;
-const int NewPrintStatement_kind = 83;
-const int NewMethodCallStatement_kind = 84;
-const int NewReturnStatement_kind = 85;
-const int NewBreakStatement_kind = 86;
-const int NewContinueStatement_kind = 87;
-const int NewBlockStatement_kind = 88;
+const int TheNewClass_kind = 47;
+const int NewClassDef_kind = 48;
+const int NewExpression_kind = 49;
+const int NewStatement_kind = 50;
+const int NewConstantExpression_kind = 52;
+const int NewBinaryExpression_kind = 57;
+const int NewUnaryExpression_kind = 58;
+const int NewParameterDef_kind = 59;
+const int NewLValueExpression_kind = 60;
+const int NewMethodCallExpression_kind = 61;
+const int NewConstantIntExpression_kind = 53;
+const int NewConstantStringExpression_kind = 54;
+const int NewConstantBoolExpression_kind = 55;
+const int NewConstantCharExpression_kind = 56;
+const int NewAddExpression_kind = 62;
+const int NewSubExpression_kind = 63;
+const int NewMultExpression_kind = 64;
+const int NewDivExpression_kind = 65;
+const int NewLessThanExpression_kind = 66;
+const int NewLessThanEqualExpression_kind = 67;
+const int NewBigerThanExpression_kind = 68;
+const int NewBigerThanEqualExpression_kind = 69;
+const int NewEqualExpression_kind = 70;
+const int NewNotEqualExpression_kind = 71;
+const int NewShiftRightExpression_kind = 72;
+const int NewShiftLeftExpression_kind = 73;
+const int NewRotExpression_kind = 74;
+const int NewOrExpression_kind = 75;
+const int NewAndExpression_kind = 76;
+const int NewModExpression_kind = 78;
+const int NewNotExpression_kind = 77;
+const int NewIfStatement_kind = 79;
+const int NewWhileStatement_kind = 80;
+const int NewForStatement_kind = 81;
+const int NewAssignStatement_kind = 82;
+const int NewReadStatement_kind = 83;
+const int NewPrintStatement_kind = 84;
+const int NewMethodCallStatement_kind = 85;
+const int NewReturnStatement_kind = 86;
+const int NewBreakStatement_kind = 87;
+const int NewContinueStatement_kind = 88;
+const int NewBlockStatement_kind = 89;
 const int TheClass_kind = 2;
 const int Expression_kind = 3;
 const int Statement_kind = 4;
@@ -118,20 +120,21 @@ const int ConstantBoolExpression_kind = 11;
 const int ConstantCharExpression_kind = 12;
 const int ConstantStringExpression_kind = 13;
 const int VariableDef_kind = 33;
-const int MethodDef_kind = 34;
-const int IfStatement_kind = 35;
-const int WhileStatement_kind = 36;
-const int ForStatement_kind = 37;
-const int AssignStatement_kind = 38;
-const int ReadStatement_kind = 39;
-const int PrintStatement_kind = 40;
-const int MethodCallStatement_kind = 41;
-const int ReturnStatement_kind = 42;
-const int BreakStatement_kind = 43;
-const int ContinueStatement_kind = 44;
-const int BlockStatement_kind = 45;
+const int LocalVariableDef_kind = 34;
+const int MethodDef_kind = 35;
+const int IfStatement_kind = 36;
+const int WhileStatement_kind = 37;
+const int ForStatement_kind = 38;
+const int AssignStatement_kind = 39;
+const int ReadStatement_kind = 40;
+const int PrintStatement_kind = 41;
+const int MethodCallStatement_kind = 42;
+const int ReturnStatement_kind = 43;
+const int BreakStatement_kind = 44;
+const int ContinueStatement_kind = 45;
+const int BlockStatement_kind = 46;
 const int Main_kind = 1;
-const int Procedimiento_kind = 50;
+const int Procedimiento_kind = 51;
 
 class TheNewClass;
 class NewClassDef;
@@ -207,6 +210,7 @@ class ConstantBoolExpression;
 class ConstantCharExpression;
 class ConstantStringExpression;
 class VariableDef;
+class LocalVariableDef;
 class MethodDef;
 class IfStatement;
 class WhileStatement;
@@ -235,7 +239,7 @@ private:
 	struct YYNODESTATE_block *blocks__;
 	struct YYNODESTATE_push *push_stack__;
 	int used__;
-#line 239 "tree.h"
+#line 243 "tree.h"
 private:
 
 	static YYNODESTATE *state__;
@@ -329,6 +333,7 @@ protected:
 public:
 
 	string place;
+	int indice;
 	Type type;
 
 	virtual string GenerarCodigo() = 0;
@@ -457,8 +462,12 @@ public:
 	NewExpression * newExpr;
 	int offset;
 	int level;
+	bool isGlobal;
+	bool isParameter;
+	bool isLocal;
 
 	virtual string GenerarCodigo();
+	virtual string GetDirLValue();
 
 	virtual int isA(int kind) const;
 	virtual const char *getKindName() const;
@@ -1041,6 +1050,7 @@ public:
 
 	string id;
 	NewExpressionList * newParameters;
+	int indexLevel;
 
 	virtual string GenerarCodigo();
 
@@ -1824,6 +1834,31 @@ protected:
 
 };
 
+class LocalVariableDef : public Statement
+{
+public:
+
+	LocalVariableDef(int first_line, int first_column);
+
+public:
+
+	int first_line;
+	int first_column;
+	Type variable_type;
+	VariableNameList * variable_names;
+
+	virtual string ToString();
+	virtual TheNewClass * ValidarSemantica();
+
+	virtual int isA(int kind) const;
+	virtual const char *getKindName() const;
+
+protected:
+
+	virtual ~LocalVariableDef();
+
+};
+
 class MethodDef : public Statement
 {
 public:
@@ -2184,6 +2219,7 @@ public:
 
 	string id;
 	NewBlockStatement * newBlockStatement;
+	int countParametros;
 
 
 	virtual int isA(int kind) const;

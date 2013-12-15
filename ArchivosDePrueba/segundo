@@ -1,0 +1,69 @@
+.data 
+dos: 
+.word 5 
+i: 
+.word 0 
+x: 
+.word 1 
+var_str0: 
+.asciiz ""final""
+var_str1: 
+.asciiz ""final""
+.text 
+main: 
+addi $sp, $sp, 0
+jal hola
+hola: 
+addi $sp, $sp, -32 
+sw $s0, 0($sp)
+sw $s1, 4($sp)
+sw $s2, 8($sp)
+sw $s3, 12($sp)
+sw $s4, 16($sp)
+sw $s5, 20($sp)
+sw $s6, 24($sp)
+sw $s7, 28($sp)
+addi $sp, $sp, -8
+sw $ra, 0($sp)
+sw $fp, 4($sp)
+la $t0, i
+lw $t0, 0($t0)
+la $t1, dos
+lw $t1, 0($t1)
+slt $t2, $t0, $t1
+
+beq $t2, $zero, else0
+la $t1, i
+lw $t1, 0($t1)
+li $v0, 1 
+move $a0, $t1
+syscall 
+la $t1, i
+la $t0, i
+lw $t0, 0($t0)
+li $t3, 1
+add $t4,$t0,$t3
+sw $t4, 0($t1)
+addi $sp, $sp, 0
+jal hola
+
+else0: 
+la $t4, var_str0
+li $v0, 1 
+move $a0, $t4
+syscall 
+
+endIf0: 
+lw $ra, 0($sp)
+lw $fp, 4($sp)
+addi $sp, $sp, 8
+lw $s0, 0($sp)
+lw $s1, 4($sp)
+lw $s2, 8($sp)
+lw $s3, 12($sp)
+lw $s4, 16($sp)
+lw $s5, 20($sp)
+lw $s6, 24($sp)
+lw $s7, 28($sp)
+addi $sp, $sp, 32
+jr $ra
